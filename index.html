@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Notion Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf8f3;
+    --bg-card:#ffffff;
+    --ink:#1a1a1a;
+    --ink-soft:#555;
+    --muted:#8a8580;
+    --line:#e8e2d5;
+    --accent:#d4532d;
+    --accent-soft:#f4e4dd;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.03);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 2px 4px rgba(0,0,0,.04);
+    --shadow-lg: 0 20px 40px rgba(0,0,0,.08), 0 8px 16px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans Thai',system-ui,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+  body{
+    background:
+      radial-gradient(circle at 10% 0%, #fff1e9 0%, transparent 40%),
+      radial-gradient(circle at 90% 100%, #f0ece0 0%, transparent 50%),
+      var(--bg);
+  }
+
+  /* —— Header —— */
+  .topbar{
+    border-bottom:1px solid var(--line);
+    background:rgba(250,248,243,.85);
+    backdrop-filter:blur(12px);
+    position:sticky;top:0;z-index:50;
+  }
+  .topbar-inner{
+    max-width:1400px;margin:0 auto;padding:18px 32px;
+    display:flex;align-items:center;justify-content:space-between;gap:24px;
+  }
+  .brand{display:flex;align-items:center;gap:14px}
+  .brand-mark{
+    width:40px;height:40px;border-radius:10px;
+    background:linear-gradient(135deg,var(--accent),#b33f1f);
+    display:grid;place-items:center;color:#fff;font-weight:700;
+    font-family:'Fraunces',serif;font-size:22px;font-style:italic;
+    box-shadow:var(--shadow-md);
+  }
+  .brand-text h1{
+    font-family:'Fraunces',serif;font-weight:500;font-size:22px;
+    letter-spacing:-.01em;line-height:1;
+  }
+  .brand-text p{font-size:12px;color:var(--muted);margin-top:4px;font-family:'JetBrains Mono',monospace}
+  .topbar-actions{display:flex;gap:8px;align-items:center}
+
+  /* —— Nav tabs —— */
+  .nav{
+    display:flex;gap:2px;background:#eee8db;padding:4px;border-radius:10px;
+    margin-right:8px;
+  }
+  .nav a{
+    text-decoration:none;font-size:13px;font-weight:500;color:var(--ink-soft);
+    padding:8px 16px;border-radius:7px;transition:all .15s;font-family:inherit;
+  }
+  .nav a:hover{color:var(--ink)}
+  .nav a.active{background:#fff;color:var(--ink);box-shadow:var(--shadow-sm)}
+
+  /* —— Buttons —— */
+  .btn{
+    border:1px solid var(--line);background:#fff;color:var(--ink);
+    padding:10px 18px;border-radius:8px;font-size:14px;font-weight:500;
+    font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
+    transition:all .15s ease;box-shadow:var(--shadow-sm);
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);border-color:#c9c2b0}
+  .btn-primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .btn-primary:hover{background:var(--accent);border-color:var(--accent)}
+  .btn-ghost{background:transparent;border-color:transparent;box-shadow:none}
+  .btn-ghost:hover{background:var(--accent-soft);color:var(--accent)}
+
+  /* —— Overview Dashboard Strip —— */
+  .overview{max-width:1400px;margin:0 auto;padding:40px 32px 16px}
+  .overview-head{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:20px;gap:16px;flex-wrap:wrap;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:11px;
+    text-transform:uppercase;letter-spacing:.15em;color:var(--accent);
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .eyebrow::before{content:'';width:24px;height:1px;background:var(--accent)}
+  .live-dot{
+    display:inline-block;width:7px;height:7px;border-radius:50%;
+    background:#2d7a2f;margin:0 6px 0 4px;vertical-align:middle;
+    box-shadow:0 0 0 0 rgba(77,165,79,.6);animation:pulse 2s infinite;
+  }
+  .live-dot.paused{background:var(--muted);animation:none;box-shadow:none}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(77,165,79,.5)}
+    70%{box-shadow:0 0 0 8px rgba(77,165,79,0)}
+    100%{box-shadow:0 0 0 0 rgba(77,165,79,0)}
+  }
+  .auto-btn{
+    border:1px solid var(--line);background:#fff;color:var(--ink-soft);
+    font-family:'JetBrains Mono',monospace;font-size:11px;
+    padding:6px 12px;border-radius:7px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;
+    text-transform:uppercase;letter-spacing:.08em;transition:all .15s;
+  }
+  .auto-btn:hover{border-color:#c9c2b0;color:var(--ink)}
+  .auto-btn.on{background:#dcefdb;color:#2d7a2f;border-color:#bcd9ba}
+  .overview-link{
+    font-family:'JetBrains Mono',monospace;font-size:11px;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);
+    text-decoration:none;transition:color .15s;
+  }
+  .overview-link:hover{color:var(--accent)}
+  .kpi-grid{
+    display:grid;grid-template-columns:repeat(4, 1fr);gap:16px;
+  }
+  .kpi-card{
+    background:var(--bg-card);border:1px solid var(--line);border-radius:16px;
+    padding:24px;box-shadow:var(--shadow-sm);
+    transition:box-shadow .2s ease, transform .2s ease;
+  }
+  .kpi-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+  .kpi-label{
+    font-family:'JetBrains Mono',monospace;font-size:10px;
+    text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
+    display:flex;align-items:center;gap:8px;
+  }
+  .kpi-dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+  .kpi-num{
+    font-family:'Fraunces',serif;font-weight:500;font-size:44px;
+    line-height:1;margin-top:14px;letter-spacing:-.02em;
+  }
+  .kpi-sub{
+    font-size:12px;color:var(--muted);margin-top:8px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .kpi-card.accent .kpi-num{color:var(--accent)} .kpi-card.accent .kpi-dot{background:var(--accent)}
+  .kpi-card.green .kpi-num{color:#2d7a2f} .kpi-card.green .kpi-dot{background:#2d7a2f}
+  .kpi-card.yellow .kpi-num{color:#b88918} .kpi-card.yellow .kpi-dot{background:#b88918}
+  .kpi-card.red .kpi-num{color:#a83028} .kpi-card.red .kpi-dot{background:#a83028}
+
+  /* —— Toolbar —— */
+  .toolbar{
+    max-width:1400px;margin:0 auto;padding:16px 32px 32px;
+    display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+  }
+  .search-box{
+    flex:1;max-width:400px;position:relative;
+  }
+  .search-box input{
+    width:100%;padding:12px 16px 12px 44px;border:1px solid var(--line);
+    border-radius:10px;background:#fff;font-family:inherit;font-size:14px;
+    transition:border-color .15s;
+  }
+  .search-box input:focus{outline:none;border-color:var(--accent)}
+  .search-box svg{
+    position:absolute;left:14px;top:50%;transform:translateY(-50%);
+    color:var(--muted);
+  }
+
+  /* —— View Toggle —— */
+  .view-toggle{
+    display:flex;gap:2px;background:#eee8db;padding:4px;border-radius:10px;
+  }
+  .view-toggle button{
+    border:none;background:transparent;color:var(--ink-soft);
+    font-size:13px;font-weight:500;font-family:inherit;
+    padding:8px 14px;border-radius:7px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;transition:all .15s;
+  }
+  .view-toggle button:hover{color:var(--ink)}
+  .view-toggle button.active{background:#fff;color:var(--ink);box-shadow:var(--shadow-sm)}
+
+  /* —— Gallery Grid —— */
+  .gallery{
+    max-width:1400px;margin:0 auto;padding:0 32px 80px;
+    display:grid;gap:24px;
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  }
+  .gallery.mode-grid{display:block;padding-bottom:80px}
+
+  /* —— Data Table (Grid view) —— */
+  .dg-card{
+    background:var(--bg-card);border:1px solid var(--line);border-radius:16px;
+    box-shadow:var(--shadow-sm);padding:28px;overflow:hidden;
+  }
+  .dg-wrap{overflow-x:auto;margin:0 -28px;padding:0 28px}
+  .dg-table{width:100%;border-collapse:collapse;font-size:13px}
+  .dg-table thead th{
+    text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);
+    font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--muted);
+    background:var(--bg);position:sticky;top:0;cursor:pointer;
+    user-select:none;white-space:nowrap;transition:color .15s;
+  }
+  .dg-table thead th:hover{color:var(--ink)}
+  .dg-table thead th.sorted{color:var(--accent)}
+  .dg-table thead th .sort-arrow{margin-left:6px;opacity:.5}
+  .dg-table thead th.sorted .sort-arrow{opacity:1}
+  .dg-table tbody tr{
+    border-bottom:1px solid var(--line);transition:background .15s;cursor:pointer;
+  }
+  .dg-table tbody tr:hover{background:#faf5ed}
+  .dg-table tbody tr:last-child{border-bottom:none}
+  .dg-table td{padding:14px;vertical-align:top;line-height:1.5}
+  .dg-table td.dg-title{
+    font-family:'Fraunces',serif;font-size:15px;font-weight:500;
+    color:var(--ink);letter-spacing:-.005em;min-width:180px;
+  }
+  .dg-table td.dg-mono{font-family:'JetBrains Mono',monospace;color:var(--ink-soft)}
+  .dg-table td.dg-num{text-align:right;font-family:'JetBrains Mono',monospace}
+  .dg-table td.dg-muted{color:#bbb}
+  .dg-tag{
+    display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;
+    font-weight:500;background:var(--accent-soft);color:var(--accent);
+    white-space:nowrap;
+  }
+  .dg-tag.gray{background:#eee8db;color:#6b6457}
+  .dg-tag.green{background:#dcefdb;color:#2d7a2f}
+  .dg-tag.blue{background:#dde6f5;color:#2c5aa0}
+  .dg-tag.yellow{background:#f7ebc4;color:#b88918}
+  .dg-tag.red{background:#f7dadc;color:#a83028}
+  .dg-tag.orange{background:#fbe4d5;color:#c2601f}
+  .dg-tag.pink{background:#f7dde5;color:#b03260}
+  .dg-tag.purple{background:#e5ddf5;color:#5c3fa0}
+  .dg-tag.brown{background:#ede0d4;color:#7a5638}
+  .dg-meta{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:16px;font-size:12px;color:var(--muted);
+    font-family:'JetBrains Mono',monospace;
+  }
+  .card{
+    background:var(--bg-card);border:1px solid var(--line);border-radius:16px;
+    padding:24px;cursor:pointer;transition:all .2s ease;position:relative;
+    display:flex;flex-direction:column;gap:14px;min-height:200px;
+    box-shadow:var(--shadow-sm);
+  }
+  .card:hover{
+    transform:translateY(-3px);box-shadow:var(--shadow-lg);
+    border-color:#d9d2c0;
+  }
+  .card::before{
+    content:'';position:absolute;top:0;left:24px;right:24px;height:3px;
+    background:linear-gradient(90deg,var(--accent),transparent);
+    border-radius:0 0 3px 3px;opacity:0;transition:opacity .2s;
+  }
+  .card:hover::before{opacity:1}
+  .card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  .card-title{
+    font-family:'Fraunces',serif;font-weight:500;font-size:20px;
+    line-height:1.25;letter-spacing:-.01em;flex:1;
+  }
+  .card-menu{
+    opacity:0;border:none;background:transparent;cursor:pointer;
+    padding:4px;border-radius:6px;color:var(--muted);transition:all .15s;
+  }
+  .card:hover .card-menu{opacity:1}
+  .card-menu:hover{background:var(--accent-soft);color:var(--accent)}
+  .card-body{display:flex;flex-direction:column;gap:10px;flex:1}
+  .prop{display:flex;gap:10px;align-items:flex-start;font-size:13px}
+  .prop-label{
+    color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;
+    text-transform:uppercase;letter-spacing:.08em;min-width:70px;padding-top:2px;
+  }
+  .prop-val{color:var(--ink-soft);flex:1;line-height:1.5;word-break:break-word}
+  .tag{
+    display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;
+    font-weight:500;background:var(--accent-soft);color:var(--accent);
+    margin-right:4px;margin-bottom:4px;
+  }
+  .tag.gray{background:#eee8db;color:#6b6457}
+  .tag.green{background:#dcefdb;color:#2d7a2f}
+  .tag.blue{background:#dde6f5;color:#2c5aa0}
+  .tag.yellow{background:#f7ebc4;color:#8a6d1a}
+  .tag.pink{background:#f7dde5;color:#b03260}
+  .tag.purple{background:#e5ddf5;color:#5c3fa0}
+
+  /* —— Status / Loading / Empty —— */
+  .status{
+    grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--muted);
+  }
+  .spinner{
+    width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--accent);
+    border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .empty-icon{font-size:48px;margin-bottom:12px;opacity:.3}
+  .error{
+    grid-column:1/-1;background:#fff;border:1px solid #f4c9c2;
+    border-radius:12px;padding:24px;color:#a83028;
+  }
+  .error h3{font-family:'Fraunces',serif;margin-bottom:8px}
+  .error code{
+    display:block;background:#fdf5f3;padding:12px;border-radius:6px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;margin-top:12px;
+    word-break:break-all;
+  }
+
+  /* —— Modal —— */
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(20,18,14,.5);backdrop-filter:blur(4px);
+    display:none;align-items:flex-start;justify-content:center;padding:60px 20px;
+    z-index:100;overflow-y:auto;
+  }
+  .modal-backdrop.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{
+    background:var(--bg-card);border-radius:20px;max-width:560px;width:100%;
+    padding:36px;box-shadow:var(--shadow-lg);animation:slideUp .25s ease;
+  }
+  @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .modal-header{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--line);
+  }
+  .modal-header h3{font-family:'Fraunces',serif;font-weight:500;font-size:24px}
+  .close-btn{
+    border:none;background:transparent;font-size:24px;cursor:pointer;
+    color:var(--muted);padding:4px 10px;border-radius:6px;
+  }
+  .close-btn:hover{background:var(--accent-soft);color:var(--accent)}
+  .form-group{margin-bottom:18px}
+  .form-group label{
+    display:block;font-family:'JetBrains Mono',monospace;font-size:10px;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px;
+  }
+  .form-group input,.form-group textarea,.form-group select{
+    width:100%;padding:10px 14px;border:1px solid var(--line);
+    border-radius:8px;font-family:inherit;font-size:14px;background:#fff;
+    transition:border-color .15s;
+  }
+  .form-group input:focus,.form-group textarea:focus,.form-group select:focus{
+    outline:none;border-color:var(--accent);
+  }
+  .form-group textarea{resize:vertical;min-height:80px}
+  .modal-actions{
+    display:flex;justify-content:flex-end;gap:10px;margin-top:28px;
+    padding-top:20px;border-top:1px solid var(--line);
+  }
+  .delete-btn{
+    color:#a83028;border-color:#f4c9c2;margin-right:auto;
+  }
+  .delete-btn:hover{background:#fdf5f3;border-color:#a83028}
+
+  /* —— Toast —— */
+  .toast{
+    position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;
+    padding:14px 22px;border-radius:10px;font-size:14px;box-shadow:var(--shadow-lg);
+    z-index:200;opacity:0;transform:translateY(20px);transition:all .25s;
+  }
+  .toast.show{opacity:1;transform:translateY(0)}
+  .toast.success{background:#2d7a2f}
+  .toast.error{background:#a83028}
+
+  /* —— Setup warning —— */
+  .setup-warn{
+    max-width:720px;margin:60px auto;padding:32px;background:#fff;
+    border:1px solid var(--line);border-radius:16px;text-align:left;
+    box-shadow:var(--shadow-md);
+  }
+  .setup-warn h3{font-family:'Fraunces',serif;font-size:24px;margin-bottom:16px}
+  .setup-warn ol{padding-left:24px;line-height:1.8;color:var(--ink-soft)}
+  .setup-warn code{
+    background:#faf5ed;padding:2px 8px;border-radius:4px;
+    font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);
+  }
+
+  @media (max-width:900px){
+    .kpi-grid{grid-template-columns:repeat(2, 1fr)}
+  }
+  @media (max-width:640px){
+    .overview{padding:32px 20px 12px}
+    .kpi-num{font-size:36px}
+    .toolbar,.gallery,.topbar-inner{padding-left:20px;padding-right:20px}
+    .gallery{grid-template-columns:1fr}
+    .modal{padding:24px}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">N</div>
+      <div class="brand-text">
+        <h1>Notion Gallery</h1>
+        <p id="dbName">connecting…</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <nav class="nav">
+        <a href="/" class="active">Gallery</a>
+        <a href="/dashboard.html">Insight</a>
+      </nav>
+      <button class="btn btn-ghost" id="refreshBtn" title="Refresh">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
+        Refresh
+      </button>
+      <button class="btn btn-primary" id="addBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Entry
+      </button>
+    </div>
+  </div>
+</header>
+
+<section class="overview">
+  <div class="overview-head">
+    <div class="eyebrow">
+      Overview · <span id="dbTitleInline">—</span>
+      <span class="live-dot paused" id="liveDot" title="Auto-refresh status"></span>
+      <button class="auto-btn" id="autoBtn" type="button">Auto-refresh: <span id="autoLabel">OFF</span></button>
+    </div>
+    <a href="/dashboard.html" class="overview-link">View detailed insight →</a>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card accent">
+      <div class="kpi-label"><span class="kpi-dot"></span>Total</div>
+      <div class="kpi-num" id="kpiTotal">—</div>
+      <div class="kpi-sub">ทั้งหมด</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label"><span class="kpi-dot"></span>Pending</div>
+      <div class="kpi-num" id="kpiPending">—</div>
+      <div class="kpi-sub">รอดำเนินการ</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label"><span class="kpi-dot"></span>Approved</div>
+      <div class="kpi-num" id="kpiApproved">—</div>
+      <div class="kpi-sub">อนุมัติแล้ว</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label"><span class="kpi-dot"></span>Rejected</div>
+      <div class="kpi-num" id="kpiRejected">—</div>
+      <div class="kpi-sub">ไม่อนุมัติ</div>
+    </div>
+  </div>
+</section>
+
+<div class="toolbar">
+  <div class="search-box">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="text" id="searchInput" placeholder="Search…" />
+  </div>
+  <div class="view-toggle" role="tablist" aria-label="View mode">
+    <button type="button" id="viewCardsBtn" class="active" aria-pressed="true">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Cards
+    </button>
+    <button type="button" id="viewGridBtn" aria-pressed="false">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      Grid
+    </button>
+  </div>
+</div>
+
+<main class="gallery" id="gallery">
+  <div class="status">
+    <div class="spinner"></div>
+    <p>Loading data from Notion…</p>
+  </div>
+</main>
+
+<!-- Edit/Create Modal -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">New Entry</h3>
+      <button class="close-btn" onclick="closeModal()">×</button>
+    </div>
+    <form id="entryForm"></form>
+    <div class="modal-actions">
+      <button class="btn delete-btn" id="deleteBtn" style="display:none" onclick="deleteEntry()">Delete</button>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEntry()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ————— State —————
+let dbSchema = null;
+let pages = [];
+let editingPage = null;
+const API = location.origin;
+const AUTO_REFRESH_MS = 30000;
+let autoTimer = null;
+let autoEnabled = true;
+let viewMode = localStorage.getItem('viewMode') || 'cards';  // 'cards' | 'grid'
+let gridSort = { col: null, dir: 'desc' };
+
+// ————— Init —————
+window.addEventListener('DOMContentLoaded', init);
+document.getElementById('refreshBtn').onclick = () => loadData(false);
+document.getElementById('addBtn').onclick = () => openModal(null);
+document.getElementById('searchInput').oninput = renderGallery;
+document.getElementById('modal').onclick = (e) => {
+  if (e.target.id === 'modal') closeModal();
+};
+document.getElementById('autoBtn').onclick = toggleAuto;
+document.getElementById('viewCardsBtn').onclick = () => setView('cards');
+document.getElementById('viewGridBtn').onclick = () => setView('grid');
+document.addEventListener('visibilitychange', () => {
+  if (!autoEnabled) return;
+  if (document.hidden) stopAutoTimer();
+  else { startAutoTimer(); loadData(true); }
+});
+
+async function init(){
+  applyViewUi();
+  await loadData(false);
+  if (autoEnabled) startAutoTimer();
+  applyAutoUi();
+}
+
+function setView(mode){
+  if (viewMode === mode) return;
+  viewMode = mode;
+  localStorage.setItem('viewMode', mode);
+  applyViewUi();
+  renderGallery();
+}
+
+function applyViewUi(){
+  const cardsActive = viewMode === 'cards';
+  document.getElementById('viewCardsBtn').classList.toggle('active', cardsActive);
+  document.getElementById('viewCardsBtn').setAttribute('aria-pressed', cardsActive);
+  document.getElementById('viewGridBtn').classList.toggle('active', !cardsActive);
+  document.getElementById('viewGridBtn').setAttribute('aria-pressed', !cardsActive);
+  const gallery = document.getElementById('gallery');
+  gallery.classList.toggle('mode-grid', !cardsActive);
+}
+
+function toggleAuto(){
+  autoEnabled = !autoEnabled;
+  if (autoEnabled){ startAutoTimer(); loadData(true); }
+  else stopAutoTimer();
+  applyAutoUi();
+}
+function startAutoTimer(){
+  stopAutoTimer();
+  autoTimer = setInterval(() => {
+    // skip silent refresh while user is editing in modal
+    if (document.getElementById('modal').classList.contains('show')) return;
+    loadData(true);
+  }, AUTO_REFRESH_MS);
+}
+function stopAutoTimer(){ if (autoTimer){ clearInterval(autoTimer); autoTimer = null; } }
+function applyAutoUi(){
+  document.getElementById('autoLabel').textContent = autoEnabled ? 'ON · 30s' : 'OFF';
+  document.getElementById('autoBtn').classList.toggle('on', autoEnabled);
+  document.getElementById('liveDot').classList.toggle('paused', !autoEnabled);
+}
+
+async function loadData(silent=false){
+  const gallery = document.getElementById('gallery');
+  if (!silent){
+    gallery.innerHTML = '<div class="status"><div class="spinner"></div><p>Loading data from Notion…</p></div>';
+  }
+
+  try {
+    // 1) Schema
+    const schemaRes = await fetch(`${API}/api/database`);
+    if (!schemaRes.ok) {
+      const errData = await schemaRes.json().catch(()=>({}));
+      throw new Error(errData.message || `Schema fetch failed (${schemaRes.status})`);
+    }
+    dbSchema = await schemaRes.json();
+
+    // DB name
+    const title = dbSchema.title?.map(t=>t.plain_text).join('') || 'Untitled Database';
+    document.getElementById('dbName').textContent = title;
+    document.getElementById('dbTitleInline').textContent = title;
+
+    // 2) Pages
+    const queryRes = await fetch(`${API}/api/query`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ page_size: 100 })
+    });
+    if (!queryRes.ok) {
+      const errData = await queryRes.json().catch(()=>({}));
+      throw new Error(errData.message || `Query failed (${queryRes.status})`);
+    }
+    const data = await queryRes.json();
+    pages = (data.results || []).filter(p => !p.in_trash && !p.archived);
+
+    renderOverview();
+    renderGallery();
+  } catch (err) {
+    if (silent){
+      console.warn('Auto-refresh failed:', err.message || err);
+      return;
+    }
+    gallery.innerHTML = `
+      <div class="error">
+        <h3>⚠️ ไม่สามารถเชื่อมต่อกับ Notion ได้</h3>
+        <p>${err.message || err}</p>
+        <code>ตรวจสอบว่า:
+1. Server ทำงานอยู่ (node server.js)
+2. Token ใน .env ถูกต้อง
+3. เชื่อม Integration กับ Database แล้ว
+4. Database ID ถูกต้อง</code>
+      </div>`;
+  }
+}
+
+// ————— Overview KPIs —————
+function renderOverview(){
+  const total = pages.length;
+  document.getElementById('kpiTotal').textContent = total;
+
+  // find status property by type
+  const statusEntry = Object.entries(dbSchema.properties || {}).find(([,s]) => s.type === 'status');
+  const counts = { 'รอดำเนินการ':0, 'อนุมัติแล้ว':0, 'ไม่อนุมัติ':0 };
+  if (statusEntry){
+    const [statusName] = statusEntry;
+    pages.forEach(p => {
+      const v = p.properties[statusName]?.status?.name;
+      if (v && counts[v] !== undefined) counts[v]++;
+    });
+  }
+  document.getElementById('kpiPending').textContent  = counts['รอดำเนินการ'];
+  document.getElementById('kpiApproved').textContent = counts['อนุมัติแล้ว'];
+  document.getElementById('kpiRejected').textContent = counts['ไม่อนุมัติ'];
+}
+
+// ————— Render —————
+function renderGallery(){
+  const gallery = document.getElementById('gallery');
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  const filtered = q ? pages.filter(p => {
+    const txt = JSON.stringify(p.properties).toLowerCase();
+    return txt.includes(q);
+  }) : pages;
+
+  if (!filtered.length) {
+    gallery.innerHTML = `<div class="status">
+      <div class="empty-icon">${q ? '🔍' : '📭'}</div>
+      <p>${q ? 'No matching items found' : 'No entries yet. Click "New Entry" to create one.'}</p>
+    </div>`;
+    return;
+  }
+
+  if (viewMode === 'grid') renderGrid(filtered);
+  else renderCards(filtered);
+}
+
+function renderCards(filtered){
+  const gallery = document.getElementById('gallery');
+  gallery.innerHTML = filtered.map(page => renderCard(page)).join('');
+  gallery.querySelectorAll('.card').forEach(card => {
+    card.onclick = () => {
+      const id = card.dataset.id;
+      const page = pages.find(p => p.id === id);
+      if (page) openModal(page);
+    };
+  });
+}
+
+function renderGrid(filtered){
+  const gallery = document.getElementById('gallery');
+  const skip = new Set(['created_by','last_edited_by','formula','rollup','relation','files','people']);
+  const cols = Object.entries(dbSchema.properties)
+    .filter(([,s]) => !skip.has(s.type))
+    .map(([name, s]) => ({name, type: s.type}));
+  cols.sort((a,b) => (a.type==='title'?-1:0) - (b.type==='title'?-1:0));
+
+  // default sort
+  if (!gridSort.col){
+    const created = cols.find(c => c.type === 'created_time');
+    gridSort.col = created ? created.name : cols[0].name;
+    gridSort.dir = created ? 'desc' : 'asc';
+  }
+
+  const rows = [...filtered].sort((a,b) => {
+    const av = sortKey(a.properties[gridSort.col]);
+    const bv = sortKey(b.properties[gridSort.col]);
+    if (av === bv) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    const r = typeof av === 'number' ? av - bv : String(av).localeCompare(String(bv), 'th');
+    return gridSort.dir === 'asc' ? r : -r;
+  });
+
+  const thead = cols.map(c => {
+    const isSorted = c.name === gridSort.col;
+    const arrow = isSorted ? (gridSort.dir === 'asc' ? '↑' : '↓') : '↕';
+    return `<th class="${isSorted?'sorted':''}" data-col="${escapeHtml(c.name)}">
+      ${escapeHtml(c.name)}<span class="sort-arrow">${arrow}</span>
+    </th>`;
+  }).join('');
+
+  const tbody = rows.map(page => `
+    <tr data-id="${page.id}">${cols.map(c => renderCell(page.properties[c.name])).join('')}</tr>
+  `).join('');
+
+  gallery.innerHTML = `
+    <div class="dg-card">
+      <div class="dg-meta">
+        <span>Showing <strong style="color:var(--ink)">${rows.length}</strong> of ${pages.length} records</span>
+        <span>Click row to edit · Click header to sort</span>
+      </div>
+      <div class="dg-wrap">
+        <table class="dg-table">
+          <thead><tr>${thead}</tr></thead>
+          <tbody>${tbody}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  gallery.querySelectorAll('.dg-table thead th').forEach(th => {
+    th.onclick = () => {
+      const col = th.dataset.col;
+      if (gridSort.col === col) gridSort.dir = gridSort.dir === 'asc' ? 'desc' : 'asc';
+      else { gridSort.col = col; gridSort.dir = 'asc'; }
+      renderGallery();
+    };
+  });
+  gallery.querySelectorAll('.dg-table tbody tr').forEach(tr => {
+    tr.onclick = () => {
+      const page = pages.find(p => p.id === tr.dataset.id);
+      if (page) openModal(page);
+    };
+  });
+}
+
+function renderCell(prop){
+  if (!prop) return '<td class="dg-muted">—</td>';
+  const muted = '<td class="dg-muted">—</td>';
+  switch(prop.type){
+    case 'title': {
+      const t = prop.title.map(x=>x.plain_text).join('').trim();
+      return t ? `<td class="dg-title">${escapeHtml(t)}</td>` : `<td class="dg-muted dg-title">—</td>`;
+    }
+    case 'rich_text': {
+      const t = prop.rich_text.map(x=>x.plain_text).join('').trim();
+      return t ? `<td>${escapeHtml(t)}</td>` : muted;
+    }
+    case 'number':
+      return prop.number != null ? `<td class="dg-num">${prop.number}</td>` : '<td class="dg-num dg-muted">—</td>';
+    case 'select':
+      return prop.select
+        ? `<td><span class="dg-tag ${prop.select.color||''}">${escapeHtml(prop.select.name)}</span></td>`
+        : muted;
+    case 'multi_select':
+      return prop.multi_select.length
+        ? `<td>${prop.multi_select.map(t=>`<span class="dg-tag ${t.color||''}">${escapeHtml(t.name)}</span>`).join(' ')}</td>`
+        : muted;
+    case 'status':
+      return prop.status
+        ? `<td><span class="dg-tag ${prop.status.color||''}">${escapeHtml(prop.status.name)}</span></td>`
+        : muted;
+    case 'date':
+      return prop.date ? `<td class="dg-mono">${prop.date.start}${prop.date.end?' → '+prop.date.end:''}</td>` : muted;
+    case 'checkbox':
+      return `<td>${prop.checkbox ? '✓' : '—'}</td>`;
+    case 'url':
+      return prop.url ? `<td><a href="${escapeHtml(prop.url)}" target="_blank" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:none">${escapeHtml(prop.url.slice(0,40))}</a></td>` : muted;
+    case 'email':
+      return prop.email ? `<td>${escapeHtml(prop.email)}</td>` : muted;
+    case 'phone_number':
+      return prop.phone_number ? `<td class="dg-mono">${escapeHtml(prop.phone_number)}</td>` : muted;
+    case 'created_time':
+    case 'last_edited_time': {
+      const d = new Date(prop[prop.type]);
+      return `<td class="dg-mono">${d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit'})}</td>`;
+    }
+    default:
+      return `<td class="dg-muted">[${prop.type}]</td>`;
+  }
+}
+
+function sortKey(prop){
+  if (!prop) return null;
+  switch(prop.type){
+    case 'title': return prop.title.map(x=>x.plain_text).join('').toLowerCase();
+    case 'rich_text': return prop.rich_text.map(x=>x.plain_text).join('').toLowerCase();
+    case 'number': return prop.number ?? null;
+    case 'select': return prop.select ? prop.select.name.toLowerCase() : null;
+    case 'multi_select': return (prop.multi_select || []).map(t=>t.name).join(',').toLowerCase();
+    case 'status': return prop.status ? prop.status.name.toLowerCase() : null;
+    case 'date': return prop.date ? new Date(prop.date.start).getTime() : null;
+    case 'checkbox': return prop.checkbox ? 1 : 0;
+    case 'url': return prop.url || null;
+    case 'email': return prop.email || null;
+    case 'phone_number': return prop.phone_number || null;
+    case 'created_time': return new Date(prop.created_time).getTime();
+    case 'last_edited_time': return new Date(prop.last_edited_time).getTime();
+    default: return null;
+  }
+}
+
+function renderCard(page){
+  const props = page.properties;
+
+  // Use hospital as the card title (fallback to person name, then "Untitled")
+  const hospitalEntry = Object.entries(props).find(([name]) =>
+    name.includes('โรงพยาบาล') || name.toLowerCase().includes('hospital')
+  );
+  const nameEntry = Object.entries(props).find(([,p]) => p.type === 'title');
+
+  let title = 'Untitled';
+  let titleKey = null;
+  if (hospitalEntry){
+    const [hName, hProp] = hospitalEntry;
+    const t = hProp.type === 'rich_text'
+      ? hProp.rich_text.map(x=>x.plain_text).join('').trim()
+      : '';
+    if (t){ title = t; titleKey = hName; }
+  }
+  if (title === 'Untitled' && nameEntry){
+    const t = nameEntry[1].title.map(x=>x.plain_text).join('').trim();
+    if (t){ title = t; titleKey = nameEntry[0]; }
+  }
+
+  // Body: person name first (as sub-identity), then the rest — excluding whatever was used as the title
+  const body = [];
+  if (nameEntry && nameEntry[0] !== titleKey) body.push(nameEntry);
+  Object.entries(props).forEach(([name, p]) => {
+    if (name === titleKey) return;
+    if (p.type === 'title') return;  // already added above
+    body.push([name, p]);
+  });
+  const shown = body.slice(0, 5);
+
+  return `
+    <div class="card" data-id="${page.id}">
+      <div class="card-header">
+        <div class="card-title">${escapeHtml(title)}</div>
+        <button class="card-menu" onclick="event.stopPropagation();">⋯</button>
+      </div>
+      <div class="card-body">
+        ${shown.map(([name, p]) => `
+          <div class="prop">
+            <div class="prop-label">${escapeHtml(name)}</div>
+            <div class="prop-val">${renderPropValue(p)}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderPropValue(p){
+  switch(p.type){
+    case 'title':
+      return escapeHtml(p.title.map(t=>t.plain_text).join('')) || '<span style="color:#bbb">—</span>';
+    case 'rich_text':
+      return escapeHtml(p.rich_text.map(t=>t.plain_text).join('')) || '<span style="color:#bbb">—</span>';
+    case 'number':
+      return p.number !== null ? p.number : '<span style="color:#bbb">—</span>';
+    case 'select':
+      return p.select ? `<span class="tag ${p.select.color || ''}">${escapeHtml(p.select.name)}</span>` : '<span style="color:#bbb">—</span>';
+    case 'multi_select':
+      return p.multi_select.length ? p.multi_select.map(t=>`<span class="tag ${t.color||''}">${escapeHtml(t.name)}</span>`).join('') : '<span style="color:#bbb">—</span>';
+    case 'status':
+      return p.status ? `<span class="tag ${p.status.color||''}">${escapeHtml(p.status.name)}</span>` : '<span style="color:#bbb">—</span>';
+    case 'date':
+      return p.date ? p.date.start + (p.date.end ? ' → ' + p.date.end : '') : '<span style="color:#bbb">—</span>';
+    case 'checkbox':
+      return p.checkbox ? '✓ Yes' : '○ No';
+    case 'url':
+      return p.url ? `<a href="${escapeHtml(p.url)}" target="_blank" style="color:var(--accent)">${escapeHtml(p.url)}</a>` : '<span style="color:#bbb">—</span>';
+    case 'email':
+      return p.email ? escapeHtml(p.email) : '<span style="color:#bbb">—</span>';
+    case 'phone_number':
+      return p.phone_number || '<span style="color:#bbb">—</span>';
+    case 'people':
+      return p.people.length ? p.people.map(pp=>pp.name||'user').join(', ') : '<span style="color:#bbb">—</span>';
+    case 'created_time':
+    case 'last_edited_time':
+      return new Date(p[p.type]).toLocaleDateString();
+    default:
+      return `<span style="color:#bbb">[${p.type}]</span>`;
+  }
+}
+
+// ————— Modal —————
+function openModal(page){
+  editingPage = page;
+  document.getElementById('modalTitle').textContent = page ? 'Edit Entry' : 'New Entry';
+  document.getElementById('deleteBtn').style.display = page ? 'inline-flex' : 'none';
+
+  const form = document.getElementById('entryForm');
+  form.innerHTML = '';
+
+  const editableTypes = ['title','rich_text','number','select','multi_select','status','date','checkbox','url','email','phone_number'];
+
+  Object.entries(dbSchema.properties).forEach(([name, schema]) => {
+    if (!editableTypes.includes(schema.type)) return;
+
+    const current = page?.properties[name];
+    const group = document.createElement('div');
+    group.className = 'form-group';
+
+    const label = document.createElement('label');
+    label.textContent = `${name} (${schema.type})`;
+    group.appendChild(label);
+
+    let input;
+    switch(schema.type){
+      case 'title':
+      case 'rich_text': {
+        input = document.createElement('textarea');
+        input.rows = schema.type==='title'?1:2;
+        if (current) {
+          const arr = schema.type==='title' ? current.title : current.rich_text;
+          input.value = arr?.map(t=>t.plain_text).join('') || '';
+        }
+        break;
+      }
+      case 'number': {
+        input = document.createElement('input');
+        input.type = 'number';
+        input.step = 'any';
+        if (current && current.number !== null) input.value = current.number;
+        break;
+      }
+      case 'select':
+      case 'status': {
+        input = document.createElement('select');
+        input.innerHTML = '<option value="">—</option>';
+        (schema[schema.type]?.options || []).forEach(opt => {
+          const o = document.createElement('option');
+          o.value = opt.name;
+          o.textContent = opt.name;
+          input.appendChild(o);
+        });
+        if (current && current[schema.type]) input.value = current[schema.type].name;
+        break;
+      }
+      case 'multi_select': {
+        input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'comma,separated,values';
+        const opts = (schema.multi_select?.options || []).map(o=>o.name).join(', ');
+        if (opts) input.placeholder = `e.g. ${opts}`;
+        if (current) input.value = current.multi_select.map(t=>t.name).join(', ');
+        break;
+      }
+      case 'date': {
+        input = document.createElement('input');
+        input.type = 'date';
+        if (current && current.date) input.value = current.date.start.split('T')[0];
+        break;
+      }
+      case 'checkbox': {
+        input = document.createElement('input');
+        input.type = 'checkbox';
+        input.style.width = 'auto';
+        if (current) input.checked = current.checkbox;
+        break;
+      }
+      case 'url':
+      case 'email':
+      case 'phone_number': {
+        input = document.createElement('input');
+        input.type = schema.type === 'email' ? 'email' : 'text';
+        if (current) input.value = current[schema.type] || '';
+        break;
+      }
+    }
+    input.dataset.propName = name;
+    input.dataset.propType = schema.type;
+    group.appendChild(input);
+    form.appendChild(group);
+  });
+
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal(){
+  document.getElementById('modal').classList.remove('show');
+  editingPage = null;
+}
+
+async function saveEntry(){
+  const form = document.getElementById('entryForm');
+  const properties = {};
+
+  form.querySelectorAll('[data-prop-name]').forEach(el => {
+    const name = el.dataset.propName;
+    const type = el.dataset.propType;
+    const v = type==='checkbox' ? el.checked : el.value;
+
+    switch(type){
+      case 'title':
+        if (v) properties[name] = { title: [{ text: { content: v } }] };
+        break;
+      case 'rich_text':
+        if (v) properties[name] = { rich_text: [{ text: { content: v } }] };
+        else properties[name] = { rich_text: [] };
+        break;
+      case 'number':
+        properties[name] = { number: v === '' ? null : Number(v) };
+        break;
+      case 'select':
+        properties[name] = v ? { select: { name: v } } : { select: null };
+        break;
+      case 'status':
+        if (v) properties[name] = { status: { name: v } };
+        break;
+      case 'multi_select':
+        properties[name] = {
+          multi_select: v.split(',').map(s=>s.trim()).filter(Boolean).map(name=>({name}))
+        };
+        break;
+      case 'date':
+        properties[name] = v ? { date: { start: v } } : { date: null };
+        break;
+      case 'checkbox':
+        properties[name] = { checkbox: v };
+        break;
+      case 'url':
+        properties[name] = { url: v || null };
+        break;
+      case 'email':
+        properties[name] = { email: v || null };
+        break;
+      case 'phone_number':
+        properties[name] = { phone_number: v || null };
+        break;
+    }
+  });
+
+  try {
+    let res;
+    if (editingPage){
+      res = await fetch(`${API}/api/pages/${editingPage.id}`, {
+        method: 'PATCH',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ properties })
+      });
+    } else {
+      res = await fetch(`${API}/api/pages`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ properties })
+      });
+    }
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Save failed');
+    }
+    closeModal();
+    showToast(editingPage ? 'Updated successfully' : 'Created successfully', 'success');
+    await loadData();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function deleteEntry(){
+  if (!editingPage) return;
+  if (!confirm('Archive this entry? (สามารถกู้คืนได้ใน Notion)')) return;
+
+  try {
+    const res = await fetch(`${API}/api/pages/${editingPage.id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Delete failed');
+    closeModal();
+    showToast('Archived', 'success');
+    await loadData();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+// ————— Utils —————
+function showToast(msg, type='success'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function escapeHtml(s){
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+</script>
+
+</body>
+</html>

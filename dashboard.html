@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Insight · Notion Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf8f3;
+    --bg-card:#ffffff;
+    --ink:#1a1a1a;
+    --ink-soft:#555;
+    --muted:#8a8580;
+    --line:#e8e2d5;
+    --accent:#d4532d;
+    --accent-soft:#f4e4dd;
+    --green:#2d7a2f;
+    --green-soft:#dcefdb;
+    --yellow:#b88918;
+    --yellow-soft:#f7ebc4;
+    --red:#a83028;
+    --red-soft:#f7dadc;
+    --blue:#2c5aa0;
+    --blue-soft:#dde6f5;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.03);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.06), 0 2px 4px rgba(0,0,0,.04);
+    --shadow-lg: 0 20px 40px rgba(0,0,0,.08), 0 8px 16px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans Thai',system-ui,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+  body{
+    background:
+      radial-gradient(circle at 10% 0%, #fff1e9 0%, transparent 40%),
+      radial-gradient(circle at 90% 100%, #f0ece0 0%, transparent 50%),
+      var(--bg);
+  }
+
+  /* —— Top bar —— */
+  .topbar{
+    border-bottom:1px solid var(--line);
+    background:rgba(250,248,243,.85);
+    backdrop-filter:blur(12px);
+    position:sticky;top:0;z-index:50;
+  }
+  .topbar-inner{
+    max-width:1400px;margin:0 auto;padding:18px 32px;
+    display:flex;align-items:center;justify-content:space-between;gap:24px;
+  }
+  .brand{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit}
+  .brand-mark{
+    width:40px;height:40px;border-radius:10px;
+    background:linear-gradient(135deg,var(--accent),#b33f1f);
+    display:grid;place-items:center;color:#fff;font-weight:700;
+    font-family:'Fraunces',serif;font-size:22px;font-style:italic;
+    box-shadow:var(--shadow-md);
+  }
+  .brand-text h1{
+    font-family:'Fraunces',serif;font-weight:500;font-size:22px;
+    letter-spacing:-.01em;line-height:1;
+  }
+  .brand-text p{font-size:12px;color:var(--muted);margin-top:4px;font-family:'JetBrains Mono',monospace}
+  .topbar-actions{display:flex;gap:8px;align-items:center}
+
+  /* —— Nav tabs —— */
+  .nav{
+    display:flex;gap:2px;background:#eee8db;padding:4px;border-radius:10px;
+    margin-right:8px;
+  }
+  .nav a{
+    text-decoration:none;font-size:13px;font-weight:500;color:var(--ink-soft);
+    padding:8px 16px;border-radius:7px;transition:all .15s;
+    font-family:inherit;
+  }
+  .nav a:hover{color:var(--ink)}
+  .nav a.active{background:#fff;color:var(--ink);box-shadow:var(--shadow-sm)}
+
+  /* —— Buttons —— */
+  .btn{
+    border:1px solid var(--line);background:#fff;color:var(--ink);
+    padding:10px 18px;border-radius:8px;font-size:14px;font-weight:500;
+    font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
+    transition:all .15s ease;box-shadow:var(--shadow-sm);
+    text-decoration:none;
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);border-color:#c9c2b0}
+  .btn-ghost{background:transparent;border-color:transparent;box-shadow:none}
+  .btn-ghost:hover{background:var(--accent-soft);color:var(--accent)}
+
+  /* —— Hero —— */
+  .hero{
+    max-width:1400px;margin:0 auto;padding:48px 32px 24px;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:11px;
+    text-transform:uppercase;letter-spacing:.15em;color:var(--accent);
+    margin-bottom:16px;display:inline-flex;align-items:center;gap:8px;
+  }
+  .eyebrow::before{content:'';width:24px;height:1px;background:var(--accent)}
+  .live-dot{
+    display:inline-block;width:7px;height:7px;border-radius:50%;
+    background:var(--green);margin:0 6px 0 4px;vertical-align:middle;
+    box-shadow:0 0 0 0 rgba(77,165,79,.6);animation:pulse 2s infinite;
+  }
+  .live-dot.paused{background:var(--muted);animation:none;box-shadow:none}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(77,165,79,.5)}
+    70%{box-shadow:0 0 0 8px rgba(77,165,79,0)}
+    100%{box-shadow:0 0 0 0 rgba(77,165,79,0)}
+  }
+  .auto-btn{
+    border:1px solid var(--line);background:#fff;color:var(--ink-soft);
+    font-family:'JetBrains Mono',monospace;font-size:11px;
+    padding:6px 12px;border-radius:7px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;
+    text-transform:uppercase;letter-spacing:.08em;transition:all .15s;
+  }
+  .auto-btn:hover{border-color:#c9c2b0;color:var(--ink)}
+  .auto-btn.on{background:var(--green-soft);color:var(--green);border-color:#bcd9ba}
+  .hero h2{
+    font-family:'Fraunces',serif;font-weight:400;font-size:clamp(32px,4vw,52px);
+    letter-spacing:-.02em;line-height:1.05;margin-bottom:16px;
+  }
+  .hero h2 em{font-style:italic;color:var(--accent);font-weight:300}
+  .hero p{color:var(--ink-soft);font-size:15px;line-height:1.6;max-width:640px}
+
+  /* —— Layout grid —— */
+  .grid{
+    max-width:1400px;margin:0 auto;padding:24px 32px 80px;
+    display:grid;gap:20px;
+    grid-template-columns:repeat(12, 1fr);
+  }
+  .card{
+    background:var(--bg-card);border:1px solid var(--line);border-radius:16px;
+    padding:28px;box-shadow:var(--shadow-sm);
+    transition:box-shadow .2s ease, transform .2s ease;
+  }
+  .card:hover{box-shadow:var(--shadow-md)}
+
+  /* grid spans */
+  .span-3{grid-column:span 3}
+  .span-4{grid-column:span 4}
+  .span-6{grid-column:span 6}
+  .span-8{grid-column:span 8}
+  .span-12{grid-column:span 12}
+
+  /* —— KPI card —— */
+  .kpi .kpi-label{
+    font-family:'JetBrains Mono',monospace;font-size:10px;
+    text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
+    display:flex;align-items:center;gap:8px;
+  }
+  .kpi .kpi-dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+  .kpi .kpi-num{
+    font-family:'Fraunces',serif;font-weight:500;font-size:48px;
+    line-height:1;margin-top:14px;letter-spacing:-.02em;
+  }
+  .kpi .kpi-sub{
+    font-size:12px;color:var(--muted);margin-top:8px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  .kpi.accent .kpi-num{color:var(--accent)}
+  .kpi.accent .kpi-dot{background:var(--accent)}
+  .kpi.green .kpi-num{color:var(--green)}
+  .kpi.green .kpi-dot{background:var(--green)}
+  .kpi.yellow .kpi-num{color:var(--yellow)}
+  .kpi.yellow .kpi-dot{background:var(--yellow)}
+  .kpi.red .kpi-num{color:var(--red)}
+  .kpi.red .kpi-dot{background:var(--red)}
+
+  /* —— Card header (for chart cards) —— */
+  .card-head{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--line);
+  }
+  .card-title{font-family:'Fraunces',serif;font-weight:500;font-size:20px;letter-spacing:-.01em}
+  .card-sub{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.1em}
+
+  /* —— Donut chart —— */
+  .donut-wrap{display:flex;align-items:center;gap:32px;flex-wrap:wrap}
+  .donut{flex-shrink:0;position:relative;width:200px;height:200px}
+  .donut svg{transform:rotate(-90deg);width:100%;height:100%}
+  .donut-center{
+    position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+  }
+  .donut-center .big{font-family:'Fraunces',serif;font-size:36px;font-weight:500;line-height:1}
+  .donut-center .sml{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.1em;margin-top:4px}
+  .legend{flex:1;display:flex;flex-direction:column;gap:14px;min-width:180px}
+  .legend-row{display:flex;align-items:center;gap:12px;font-size:13px}
+  .legend-sw{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+  .legend-name{flex:1;color:var(--ink-soft)}
+  .legend-val{font-family:'JetBrains Mono',monospace;font-weight:500;color:var(--ink)}
+  .legend-pct{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-left:8px}
+
+  /* —— Horizontal bar chart —— */
+  .hbar-list{display:flex;flex-direction:column;gap:18px}
+  .hbar-row{display:flex;flex-direction:column;gap:6px}
+  .hbar-meta{display:flex;justify-content:space-between;font-size:13px}
+  .hbar-name{color:var(--ink-soft);font-weight:500}
+  .hbar-val{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:12px}
+  .hbar-track{height:8px;background:#f3ede0;border-radius:99px;overflow:hidden}
+  .hbar-fill{
+    height:100%;border-radius:99px;
+    background:linear-gradient(90deg,var(--accent),#e8704a);
+    transition:width .8s cubic-bezier(.2,.8,.2,1);
+  }
+  .hbar-fill.soft{background:linear-gradient(90deg,#c9c2b0,#eee8db)}
+
+  /* —— Ranked list —— */
+  .rank-list{display:flex;flex-direction:column;gap:2px}
+  .rank-row{
+    display:flex;align-items:center;gap:16px;padding:14px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .rank-row:last-child{border-bottom:none}
+  .rank-num{
+    width:28px;height:28px;border-radius:50%;background:var(--accent-soft);
+    color:var(--accent);display:grid;place-items:center;
+    font-family:'Fraunces',serif;font-weight:600;font-size:14px;flex-shrink:0;
+  }
+  .rank-row:nth-child(1) .rank-num{background:var(--accent);color:#fff}
+  .rank-row:nth-child(2) .rank-num{background:#ecd9c9;color:#8a5a3a}
+  .rank-row:nth-child(3) .rank-num{background:#eee8db;color:#6b6457}
+  .rank-name{flex:1;font-size:14px;color:var(--ink)}
+  .rank-count{font-family:'Fraunces',serif;font-weight:500;font-size:18px;color:var(--ink)}
+  .rank-count-unit{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-left:4px}
+
+  /* —— Timeline / area chart —— */
+  .timeline-wrap{position:relative;width:100%;height:260px}
+  .timeline-wrap svg{width:100%;height:100%;display:block;overflow:visible}
+  .axis-label{font-family:'JetBrains Mono',monospace;font-size:10px;fill:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .grid-line{stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}
+  .timeline-area{fill:url(#areaGrad);opacity:.7}
+  .timeline-line{stroke:var(--accent);stroke-width:2.5;fill:none;stroke-linejoin:round;stroke-linecap:round}
+  .timeline-dot{fill:var(--accent);stroke:#fff;stroke-width:2}
+  .timeline-hover{fill:transparent;cursor:pointer}
+
+  /* —— Data grid (table) —— */
+  .dg-wrap{
+    overflow-x:auto;margin:0 -28px -28px;padding:0 28px 28px;
+  }
+  .dg-meta{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:16px;font-size:12px;color:var(--muted);
+    font-family:'JetBrains Mono',monospace;
+  }
+  .dg-search{
+    padding:8px 14px;border:1px solid var(--line);border-radius:8px;
+    font-family:inherit;font-size:13px;background:#fff;min-width:220px;
+    transition:border-color .15s;
+  }
+  .dg-search:focus{outline:none;border-color:var(--accent)}
+  .dg-table{
+    width:100%;border-collapse:collapse;font-size:13px;
+  }
+  .dg-table thead th{
+    text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);
+    font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--muted);
+    background:var(--bg);position:sticky;top:0;cursor:pointer;
+    user-select:none;white-space:nowrap;transition:color .15s;
+  }
+  .dg-table thead th:hover{color:var(--ink)}
+  .dg-table thead th.sorted{color:var(--accent)}
+  .dg-table thead th .sort-arrow{margin-left:6px;opacity:.5}
+  .dg-table thead th.sorted .sort-arrow{opacity:1}
+  .dg-table tbody tr{
+    border-bottom:1px solid var(--line);transition:background .15s;
+  }
+  .dg-table tbody tr:hover{background:#faf5ed}
+  .dg-table tbody tr:last-child{border-bottom:none}
+  .dg-table td{padding:14px;vertical-align:top;line-height:1.5}
+  .dg-table td.dg-title{
+    font-family:'Fraunces',serif;font-size:15px;font-weight:500;
+    color:var(--ink);letter-spacing:-.005em;min-width:180px;
+  }
+  .dg-table td.dg-mono{font-family:'JetBrains Mono',monospace;color:var(--ink-soft)}
+  .dg-table td.dg-num{text-align:right;font-family:'JetBrains Mono',monospace}
+  .dg-table td.dg-muted{color:#bbb}
+  .dg-tag{
+    display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;
+    font-weight:500;background:var(--accent-soft);color:var(--accent);
+    white-space:nowrap;
+  }
+  .dg-tag.gray{background:#eee8db;color:#6b6457}
+  .dg-tag.green{background:var(--green-soft);color:var(--green)}
+  .dg-tag.blue{background:var(--blue-soft);color:var(--blue)}
+  .dg-tag.yellow{background:var(--yellow-soft);color:var(--yellow)}
+  .dg-tag.red{background:var(--red-soft);color:var(--red)}
+  .dg-tag.orange{background:#fbe4d5;color:#c2601f}
+  .dg-tag.pink{background:#f7dde5;color:#b03260}
+  .dg-tag.purple{background:#e5ddf5;color:#5c3fa0}
+  .dg-tag.brown{background:#ede0d4;color:#7a5638}
+  .dg-table-empty{text-align:center;padding:40px 0;color:var(--muted)}
+
+  /* —— Completeness list —— */
+  .comp-list{display:flex;flex-direction:column;gap:16px}
+  .comp-row{display:grid;grid-template-columns:180px 1fr 60px;align-items:center;gap:16px}
+  .comp-name{font-size:13px;color:var(--ink-soft);font-weight:500}
+  .comp-track{height:6px;background:#f3ede0;border-radius:99px;overflow:hidden}
+  .comp-fill{
+    height:100%;border-radius:99px;
+    background:linear-gradient(90deg,var(--green),#4da54f);
+    transition:width .8s cubic-bezier(.2,.8,.2,1);
+  }
+  .comp-fill.warn{background:linear-gradient(90deg,var(--yellow),#d9a640)}
+  .comp-fill.low{background:linear-gradient(90deg,var(--red),#c95044)}
+  .comp-val{
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);
+    text-align:right;font-weight:500;
+  }
+
+  /* —— Loading / empty / error —— */
+  .loader{
+    grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--muted);
+  }
+  .spinner{
+    width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--accent);
+    border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .error{
+    grid-column:1/-1;background:#fff;border:1px solid #f4c9c2;
+    border-radius:12px;padding:24px;color:#a83028;
+  }
+  .error h3{font-family:'Fraunces',serif;margin-bottom:8px}
+  .empty-small{text-align:center;color:var(--muted);font-size:13px;padding:40px 0}
+
+  /* —— Color swatches for status —— */
+  .sw-yellow{background:#e8b94a}
+  .sw-green{background:#4da54f}
+  .sw-red{background:#d4533c}
+  .sw-gray{background:#b8b0a0}
+  .sw-blue{background:#4a7cc9}
+  .sw-orange{background:#e8844a}
+  .sw-pink{background:#d87090}
+  .sw-purple{background:#8a6ec9}
+
+  @media (max-width:900px){
+    .span-3,.span-4,.span-6,.span-8{grid-column:span 12}
+    .comp-row{grid-template-columns:140px 1fr 50px}
+    .hero,.grid,.topbar-inner{padding-left:20px;padding-right:20px}
+    .donut-wrap{justify-content:center}
+    .dg-meta{flex-direction:column;align-items:flex-start;gap:8px}
+    .dg-search{width:100%}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="/" class="brand">
+      <div class="brand-mark">N</div>
+      <div class="brand-text">
+        <h1>Notion Gallery</h1>
+        <p id="dbName">connecting…</p>
+      </div>
+    </a>
+    <div class="topbar-actions">
+      <nav class="nav">
+        <a href="/">Gallery</a>
+        <a href="/dashboard.html" class="active">Insight</a>
+      </nav>
+      <button class="btn btn-ghost" id="refreshBtn" title="Refresh">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="eyebrow">
+    Analytics · <span id="updatedAt">—</span>
+    <span class="live-dot paused" id="liveDot" title="Auto-refresh status"></span>
+    <button class="auto-btn" id="autoBtn" type="button">Auto-refresh: <span id="autoLabel">OFF</span></button>
+  </div>
+  <h2>Insight <em>at a glance.</em></h2>
+  <p>สรุปภาพรวมการลงทะเบียน แสดงสถานะการอนุมัติ โรงพยาบาลที่ลงทะเบียนมากที่สุด การกระจายตามตำแหน่ง และแนวโน้มการลงทะเบียน เพื่อช่วยคุณตัดสินใจได้เร็วขึ้น</p>
+</section>
+
+<main class="grid" id="root">
+  <div class="loader">
+    <div class="spinner"></div>
+    <p>Loading insight…</p>
+  </div>
+</main>
+
+<script>
+const API = location.origin;
+const AUTO_REFRESH_MS = 30000;
+let schema = null;
+let pages = [];
+let autoTimer = null;
+let autoEnabled = true;
+let gridSort = { col: null, dir: 'desc' };  // col = property name, dir = 'asc' | 'desc'
+let gridSearch = '';
+
+// ————— Palette for chart colors —————
+const COLOR_BY_NOTION = {
+  yellow:'#e8b94a', green:'#4da54f', red:'#d4533c', orange:'#e8844a',
+  blue:'#4a7cc9', pink:'#d87090', purple:'#8a6ec9', brown:'#a3785c',
+  gray:'#b8b0a0', default:'#a3978a'
+};
+
+document.getElementById('refreshBtn').onclick = () => loadData(false);
+document.getElementById('autoBtn').onclick = toggleAuto;
+document.addEventListener('visibilitychange', () => {
+  if (!autoEnabled) return;
+  if (document.hidden) stopAutoTimer();
+  else { startAutoTimer(); loadData(true); }
+});
+window.addEventListener('DOMContentLoaded', () => {
+  loadData(false).then(() => { if (autoEnabled) startAutoTimer(); });
+  applyAutoUi();
+});
+
+function toggleAuto(){
+  autoEnabled = !autoEnabled;
+  if (autoEnabled){
+    startAutoTimer();
+    loadData(true);
+  } else {
+    stopAutoTimer();
+  }
+  applyAutoUi();
+}
+
+function startAutoTimer(){
+  stopAutoTimer();
+  autoTimer = setInterval(() => loadData(true), AUTO_REFRESH_MS);
+}
+function stopAutoTimer(){
+  if (autoTimer){ clearInterval(autoTimer); autoTimer = null; }
+}
+function applyAutoUi(){
+  document.getElementById('autoLabel').textContent = autoEnabled ? `ON · 30s` : 'OFF';
+  document.getElementById('autoBtn').classList.toggle('on', autoEnabled);
+  document.getElementById('liveDot').classList.toggle('paused', !autoEnabled);
+}
+
+async function loadData(silent=false){
+  const root = document.getElementById('root');
+  if (!silent){
+    root.innerHTML = '<div class="loader"><div class="spinner"></div><p>Loading insight…</p></div>';
+  }
+  try {
+    const [sRes, qRes] = await Promise.all([
+      fetch(`${API}/api/database`),
+      fetch(`${API}/api/query`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({page_size:100})})
+    ]);
+    if (!sRes.ok) throw new Error((await sRes.json()).message || 'Schema failed');
+    if (!qRes.ok) throw new Error((await qRes.json()).message || 'Query failed');
+    schema = await sRes.json();
+    const data = await qRes.json();
+    pages = (data.results || []).filter(p => !p.in_trash && !p.archived);
+
+    const title = schema.title?.map(t=>t.plain_text).join('') || 'Database';
+    document.getElementById('dbName').textContent = title;
+    document.getElementById('updatedAt').textContent = new Date().toLocaleString('th-TH',{
+      dateStyle:'medium', timeStyle:'short'
+    });
+
+    render();
+  } catch (err) {
+    if (silent){
+      console.warn('Auto-refresh failed:', err.message || err);
+      return;
+    }
+    root.innerHTML = `<div class="error">
+      <h3>⚠️ ไม่สามารถโหลดข้อมูลได้</h3>
+      <p>${err.message || err}</p>
+    </div>`;
+  }
+}
+
+// ————— Helpers —————
+function getText(p){
+  if (!p) return '';
+  if (p.type === 'rich_text') return p.rich_text.map(t=>t.plain_text).join('').trim();
+  if (p.type === 'title') return p.title.map(t=>t.plain_text).join('').trim();
+  return '';
+}
+function getTitle(page){
+  const t = Object.values(page.properties).find(p=>p.type==='title');
+  return t ? t.title.map(x=>x.plain_text).join('').trim() : '';
+}
+function findProp(page, name){ return page.properties[name]; }
+function countBy(items, keyFn){
+  const m = new Map();
+  items.forEach(it => {
+    const k = keyFn(it);
+    if (!k) return;
+    m.set(k, (m.get(k) || 0) + 1);
+  });
+  return [...m.entries()].sort((a,b)=>b[1]-a[1]);
+}
+
+// find property by type (first match)
+function propNameByType(type){
+  if (!schema) return null;
+  const found = Object.entries(schema.properties).find(([,s])=>s.type===type);
+  return found ? found[0] : null;
+}
+// find property by partial name match (case-insensitive)
+function propNameLike(...patterns){
+  if (!schema) return null;
+  const keys = Object.keys(schema.properties);
+  for (const pat of patterns){
+    const hit = keys.find(k => k.toLowerCase().includes(pat.toLowerCase()));
+    if (hit) return hit;
+  }
+  return null;
+}
+
+// ————— Render —————
+function render(){
+  const statusName = propNameByType('status') || propNameLike('สถานะ','status');
+  const hospitalName = propNameLike('โรงพยาบาล','สถานพยาบาล','hospital');
+  const positionName = propNameLike('ตำแหน่ง','position');
+  const coordinatorName = propNameLike('ผู้ประสานงาน','coordinator');
+  const phoneName = propNameByType('phone_number');
+  const createdName = propNameByType('created_time') || propNameLike('วันที่','date');
+
+  // Status breakdown (using schema options for consistent color/order)
+  let statusBreakdown = [];
+  let total = pages.length;
+  if (statusName && schema.properties[statusName].type === 'status'){
+    const opts = schema.properties[statusName].status.options;
+    const byName = {};
+    opts.forEach(o => byName[o.name] = {name:o.name, color:o.color, count:0});
+    pages.forEach(p => {
+      const v = p.properties[statusName]?.status?.name;
+      if (v && byName[v]) byName[v].count++;
+    });
+    statusBreakdown = Object.values(byName);
+  }
+
+  // Get counts by status name for KPI
+  const byStatus = {};
+  statusBreakdown.forEach(s => byStatus[s.name] = s.count);
+  const approved = byStatus['อนุมัติแล้ว'] || 0;
+  const pending  = byStatus['รอดำเนินการ'] || 0;
+  const rejected = byStatus['ไม่อนุมัติ'] || 0;
+
+  // Hospital counts
+  const hospitalCounts = hospitalName
+    ? countBy(pages, p => getText(p.properties[hospitalName])).slice(0,5)
+    : [];
+
+  // Position counts
+  const positionCounts = positionName
+    ? countBy(pages, p => getText(p.properties[positionName])).slice(0,6)
+    : [];
+
+  // Coordinator ranking
+  const coordinatorCounts = coordinatorName
+    ? countBy(pages, p => getText(p.properties[coordinatorName])).slice(0,5)
+    : [];
+
+  // Timeline (last 30 days)
+  const timeline = buildTimeline(pages, createdName, 30);
+
+  // Completeness
+  const completeness = buildCompleteness();
+
+  // ————— Build markup —————
+  const root = document.getElementById('root');
+  root.innerHTML = `
+    ${kpiCard('Total', total, 'ทั้งหมด', 'accent')}
+    ${kpiCard('Pending', pending, 'รอดำเนินการ', 'yellow')}
+    ${kpiCard('Approved', approved, 'อนุมัติแล้ว', 'green')}
+    ${kpiCard('Rejected', rejected, 'ไม่อนุมัติ', 'red')}
+
+    ${donutCard('Status', 'การกระจายตามสถานะ', statusBreakdown, total)}
+    ${barCard('Top Hospitals', 'โรงพยาบาล/สถานพยาบาล (Top 5)', hospitalCounts, total)}
+
+    ${barCard('Positions', 'กระจายตามตำแหน่ง', positionCounts, total, true)}
+    ${rankCard('Top Coordinators', 'ผู้ประสานงานยอดนิยม', coordinatorCounts)}
+
+    ${timelineCard('Registrations', '30 วันย้อนหลัง', timeline)}
+
+    ${gridCard('Data Grid', 'ตารางข้อมูลทั้งหมด · คลิกหัวคอลัมน์เพื่อเรียงลำดับ')}
+
+    ${completenessCard('Data Completeness', 'ความครบถ้วนของข้อมูลในแต่ละ field', completeness)}
+  `;
+
+  // Animate bars and donut
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.hbar-fill').forEach(el => el.style.width = el.dataset.pct + '%');
+    document.querySelectorAll('.comp-fill').forEach(el => el.style.width = el.dataset.pct + '%');
+  });
+
+  bindGridEvents();
+}
+
+// ————— Card builders —————
+function kpiCard(label, num, sub, cls=''){
+  return `
+    <div class="card kpi span-3 ${cls}">
+      <div class="kpi-label"><span class="kpi-dot"></span>${escapeHtml(label)}</div>
+      <div class="kpi-num">${num}</div>
+      <div class="kpi-sub">${escapeHtml(sub)}</div>
+    </div>`;
+}
+
+function donutCard(title, sub, items, total){
+  if (!items.length){
+    return `<div class="card span-6">${cardHead(title, sub)}<div class="empty-small">— ไม่พบข้อมูลสถานะ</div></div>`;
+  }
+  const size = 200, r = 80, c = 2 * Math.PI * r;
+  let offset = 0;
+  const visibleTotal = items.reduce((s,x)=>s+x.count,0) || 1;
+  const segs = items.map(it => {
+    const frac = it.count / visibleTotal;
+    const dash = frac * c;
+    const seg = `<circle cx="100" cy="100" r="${r}" fill="none"
+      stroke="${COLOR_BY_NOTION[it.color]||COLOR_BY_NOTION.default}"
+      stroke-width="24"
+      stroke-dasharray="${dash} ${c-dash}"
+      stroke-dashoffset="${-offset}"/>`;
+    offset += dash;
+    return seg;
+  }).join('');
+
+  const legend = items.map(it => {
+    const pct = visibleTotal ? Math.round(it.count/visibleTotal*100) : 0;
+    return `<div class="legend-row">
+      <span class="legend-sw" style="background:${COLOR_BY_NOTION[it.color]||COLOR_BY_NOTION.default}"></span>
+      <span class="legend-name">${escapeHtml(it.name)}</span>
+      <span class="legend-val">${it.count}</span>
+      <span class="legend-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  return `
+    <div class="card span-6">
+      ${cardHead(title, sub)}
+      <div class="donut-wrap">
+        <div class="donut">
+          <svg viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="${r}" fill="none" stroke="#f3ede0" stroke-width="24"/>
+            ${segs}
+          </svg>
+          <div class="donut-center">
+            <div>
+              <div class="big">${total}</div>
+              <div class="sml">records</div>
+            </div>
+          </div>
+        </div>
+        <div class="legend">${legend}</div>
+      </div>
+    </div>`;
+}
+
+function barCard(title, sub, items, total, soft=false){
+  if (!items.length){
+    return `<div class="card span-6">${cardHead(title, sub)}<div class="empty-small">— ไม่มีข้อมูล</div></div>`;
+  }
+  const max = items[0][1] || 1;
+  const rows = items.map(([name, n]) => {
+    const pct = Math.round((n/max) * 100);
+    const pctTotal = total ? Math.round((n/total) * 100) : 0;
+    return `
+      <div class="hbar-row">
+        <div class="hbar-meta">
+          <span class="hbar-name">${escapeHtml(name || '— ไม่ระบุ')}</span>
+          <span class="hbar-val">${n} · ${pctTotal}%</span>
+        </div>
+        <div class="hbar-track">
+          <div class="hbar-fill ${soft?'soft':''}" data-pct="${pct}" style="width:0%"></div>
+        </div>
+      </div>`;
+  }).join('');
+  return `<div class="card span-6">${cardHead(title, sub)}<div class="hbar-list">${rows}</div></div>`;
+}
+
+function rankCard(title, sub, items){
+  if (!items.length){
+    return `<div class="card span-6">${cardHead(title, sub)}<div class="empty-small">— ไม่มีข้อมูล</div></div>`;
+  }
+  const rows = items.map(([name, n], i) => `
+    <div class="rank-row">
+      <div class="rank-num">${i+1}</div>
+      <div class="rank-name">${escapeHtml(name || '— ไม่ระบุ')}</div>
+      <div class="rank-count">${n}<span class="rank-count-unit">records</span></div>
+    </div>
+  `).join('');
+  return `<div class="card span-6">${cardHead(title, sub)}<div class="rank-list">${rows}</div></div>`;
+}
+
+function timelineCard(title, sub, series){
+  if (!series.length){
+    return `<div class="card span-12">${cardHead(title, sub)}<div class="empty-small">— ไม่มีข้อมูลวันที่ลงทะเบียน</div></div>`;
+  }
+  const w = 1000, h = 200, pad = {l:40, r:20, t:20, b:30};
+  const innerW = w - pad.l - pad.r;
+  const innerH = h - pad.t - pad.b;
+  const maxY = Math.max(...series.map(d=>d.count), 1);
+  const stepX = innerW / Math.max(series.length - 1, 1);
+
+  const pts = series.map((d,i) => [
+    pad.l + i * stepX,
+    pad.t + innerH - (d.count / maxY) * innerH
+  ]);
+
+  const linePath = pts.map((p,i)=>(i?'L':'M')+p[0]+','+p[1]).join(' ');
+  const areaPath = linePath + ` L${pad.l+innerW},${pad.t+innerH} L${pad.l},${pad.t+innerH} Z`;
+
+  // Y gridlines (4 steps)
+  const yTicks = [0,1,2,3,4].map(i => {
+    const v = Math.ceil(maxY * (1 - i/4));
+    const y = pad.t + (innerH * i/4);
+    return `
+      <line class="grid-line" x1="${pad.l}" y1="${y}" x2="${pad.l+innerW}" y2="${y}"/>
+      <text class="axis-label" x="${pad.l - 8}" y="${y+3}" text-anchor="end">${v}</text>
+    `;
+  }).join('');
+
+  // X labels: first, mid, last
+  const idxs = series.length > 1 ? [0, Math.floor(series.length/2), series.length-1] : [0];
+  const xLabels = idxs.map(i => {
+    const d = series[i];
+    const x = pad.l + i * stepX;
+    return `<text class="axis-label" x="${x}" y="${h - 8}" text-anchor="middle">${d.label}</text>`;
+  }).join('');
+
+  const dots = pts.map((p,i) => series[i].count
+    ? `<circle class="timeline-dot" cx="${p[0]}" cy="${p[1]}" r="3"><title>${series[i].label}: ${series[i].count} registration(s)</title></circle>`
+    : '').join('');
+
+  return `
+    <div class="card span-12">
+      ${cardHead(title, sub)}
+      <div class="timeline-wrap">
+        <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#d4532d" stop-opacity=".28"/>
+              <stop offset="100%" stop-color="#d4532d" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          ${yTicks}
+          <path class="timeline-area" d="${areaPath}"/>
+          <path class="timeline-line" d="${linePath}"/>
+          ${dots}
+          ${xLabels}
+        </svg>
+      </div>
+    </div>`;
+}
+
+function completenessCard(title, sub, stats){
+  const rows = stats.map(s => {
+    const cls = s.pct >= 80 ? '' : s.pct >= 50 ? 'warn' : 'low';
+    return `
+      <div class="comp-row">
+        <div class="comp-name">${escapeHtml(s.name)} <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-transform:uppercase">· ${s.type}</span></div>
+        <div class="comp-track"><div class="comp-fill ${cls}" data-pct="${s.pct}" style="width:0%"></div></div>
+        <div class="comp-val">${s.filled}/${s.total}</div>
+      </div>`;
+  }).join('');
+  return `<div class="card span-12">${cardHead(title, sub)}<div class="comp-list">${rows}</div></div>`;
+}
+
+function gridCard(title, sub){
+  if (!schema || !pages.length){
+    return `<div class="card span-12">${cardHead(title, sub)}<div class="empty-small">— ไม่มีข้อมูล</div></div>`;
+  }
+  const skip = new Set(['created_by','last_edited_by','formula','rollup','relation','files','people']);
+  const cols = Object.entries(schema.properties)
+    .filter(([,s]) => !skip.has(s.type))
+    .map(([name,s]) => ({name, type: s.type}));
+  // title column first
+  cols.sort((a,b) => (a.type==='title'?-1:0) - (b.type==='title'?-1:0));
+
+  // default sort: created_time desc if available, else title asc
+  if (!gridSort.col){
+    const createdCol = cols.find(c => c.type === 'created_time');
+    gridSort.col = createdCol ? createdCol.name : cols[0].name;
+    gridSort.dir = createdCol ? 'desc' : 'asc';
+  }
+
+  const q = gridSearch.trim().toLowerCase();
+  let rows = pages;
+  if (q){
+    rows = rows.filter(p => JSON.stringify(p.properties).toLowerCase().includes(q));
+  }
+  rows = [...rows].sort((a,b) => {
+    const av = sortKey(a.properties[gridSort.col], gridSort.col === '__created__' ? a.created_time : null);
+    const bv = sortKey(b.properties[gridSort.col], gridSort.col === '__created__' ? b.created_time : null);
+    if (av === bv) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    const r = typeof av === 'number' ? av - bv : String(av).localeCompare(String(bv), 'th');
+    return gridSort.dir === 'asc' ? r : -r;
+  });
+
+  const thead = cols.map(c => {
+    const isSorted = c.name === gridSort.col;
+    const arrow = isSorted ? (gridSort.dir === 'asc' ? '↑' : '↓') : '↕';
+    return `<th class="${isSorted?'sorted':''}" data-col="${escapeHtml(c.name)}">
+      ${escapeHtml(c.name)}<span class="sort-arrow">${arrow}</span>
+    </th>`;
+  }).join('');
+
+  const tbody = rows.length ? rows.map(page => `
+    <tr>${cols.map(c => renderCell(page.properties[c.name], c.type)).join('')}</tr>
+  `).join('') : `<tr><td class="dg-table-empty" colspan="${cols.length}">ไม่พบข้อมูลที่ค้นหา</td></tr>`;
+
+  return `
+    <div class="card span-12">
+      ${cardHead(title, sub)}
+      <div class="dg-meta">
+        <span>Showing <strong style="color:var(--ink)">${rows.length}</strong> of ${pages.length} records</span>
+        <input type="text" id="gridSearch" class="dg-search" placeholder="🔍 ค้นหาในตาราง…" value="${escapeHtml(gridSearch)}" />
+      </div>
+      <div class="dg-wrap">
+        <table class="dg-table">
+          <thead><tr>${thead}</tr></thead>
+          <tbody>${tbody}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function bindGridEvents(){
+  const search = document.getElementById('gridSearch');
+  if (search){
+    search.oninput = (e) => {
+      gridSearch = e.target.value;
+      updateGridOnly();
+      // keep focus and caret
+      requestAnimationFrame(() => {
+        const s = document.getElementById('gridSearch');
+        if (s){ s.focus(); s.setSelectionRange(gridSearch.length, gridSearch.length); }
+      });
+    };
+  }
+  document.querySelectorAll('.dg-table thead th').forEach(th => {
+    th.onclick = () => {
+      const col = th.dataset.col;
+      if (gridSort.col === col){
+        gridSort.dir = gridSort.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        gridSort.col = col;
+        gridSort.dir = 'asc';
+      }
+      updateGridOnly();
+    };
+  });
+}
+
+function updateGridOnly(){
+  // Re-render just the grid card to preserve scroll and chart animations
+  const cards = document.querySelectorAll('.card.span-12');
+  const target = [...cards].find(c => c.querySelector('.dg-table, .empty-small'));
+  if (!target) { render(); return; }
+  target.outerHTML = gridCard('Data Grid', 'ตารางข้อมูลทั้งหมด · คลิกหัวคอลัมน์เพื่อเรียงลำดับ');
+  bindGridEvents();
+}
+
+function renderCell(prop, type){
+  if (!prop) return '<td class="dg-muted">—</td>';
+  const muted = '<td class="dg-muted">—</td>';
+  switch(prop.type){
+    case 'title': {
+      const t = prop.title.map(x=>x.plain_text).join('').trim();
+      return t ? `<td class="dg-title">${escapeHtml(t)}</td>` : muted.replace('dg-muted','dg-muted dg-title');
+    }
+    case 'rich_text': {
+      const t = prop.rich_text.map(x=>x.plain_text).join('').trim();
+      return t ? `<td>${escapeHtml(t)}</td>` : muted;
+    }
+    case 'number':
+      return prop.number != null ? `<td class="dg-num">${prop.number}</td>` : '<td class="dg-num dg-muted">—</td>';
+    case 'select':
+      return prop.select
+        ? `<td><span class="dg-tag ${prop.select.color||''}">${escapeHtml(prop.select.name)}</span></td>`
+        : muted;
+    case 'multi_select':
+      return prop.multi_select.length
+        ? `<td>${prop.multi_select.map(t=>`<span class="dg-tag ${t.color||''}">${escapeHtml(t.name)}</span>`).join(' ')}</td>`
+        : muted;
+    case 'status':
+      return prop.status
+        ? `<td><span class="dg-tag ${prop.status.color||''}">${escapeHtml(prop.status.name)}</span></td>`
+        : muted;
+    case 'date':
+      return prop.date ? `<td class="dg-mono">${prop.date.start}${prop.date.end?' → '+prop.date.end:''}</td>` : muted;
+    case 'checkbox':
+      return `<td>${prop.checkbox ? '✓' : '—'}</td>`;
+    case 'url':
+      return prop.url ? `<td><a href="${escapeHtml(prop.url)}" target="_blank" style="color:var(--accent);text-decoration:none">${escapeHtml(truncate(prop.url,40))}</a></td>` : muted;
+    case 'email':
+      return prop.email ? `<td>${escapeHtml(prop.email)}</td>` : muted;
+    case 'phone_number':
+      return prop.phone_number ? `<td class="dg-mono">${escapeHtml(prop.phone_number)}</td>` : muted;
+    case 'created_time':
+    case 'last_edited_time': {
+      const d = new Date(prop[prop.type]);
+      return `<td class="dg-mono">${d.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit'})}</td>`;
+    }
+    default:
+      return `<td class="dg-muted">[${prop.type}]</td>`;
+  }
+}
+
+function sortKey(prop, fallbackIso){
+  if (!prop) return fallbackIso ? new Date(fallbackIso).getTime() : null;
+  switch(prop.type){
+    case 'title': return prop.title.map(x=>x.plain_text).join('').toLowerCase();
+    case 'rich_text': return prop.rich_text.map(x=>x.plain_text).join('').toLowerCase();
+    case 'number': return prop.number ?? null;
+    case 'select': return prop.select ? prop.select.name.toLowerCase() : null;
+    case 'multi_select': return (prop.multi_select || []).map(t=>t.name).join(',').toLowerCase();
+    case 'status': return prop.status ? prop.status.name.toLowerCase() : null;
+    case 'date': return prop.date ? new Date(prop.date.start).getTime() : null;
+    case 'checkbox': return prop.checkbox ? 1 : 0;
+    case 'url': return prop.url || null;
+    case 'email': return prop.email || null;
+    case 'phone_number': return prop.phone_number || null;
+    case 'created_time': return new Date(prop.created_time).getTime();
+    case 'last_edited_time': return new Date(prop.last_edited_time).getTime();
+    default: return null;
+  }
+}
+
+function truncate(s, n){ return s.length > n ? s.slice(0, n-1) + '…' : s; }
+
+function cardHead(title, sub){
+  return `<div class="card-head">
+    <div class="card-title">${escapeHtml(title)}</div>
+    <div class="card-sub">${escapeHtml(sub)}</div>
+  </div>`;
+}
+
+// ————— Data transforms —————
+function buildTimeline(pages, createdProp, days){
+  if (!createdProp) return [];
+  const now = new Date();
+  const start = new Date(now); start.setDate(start.getDate() - (days-1)); start.setHours(0,0,0,0);
+
+  // bucket by date string YYYY-MM-DD
+  const buckets = {};
+  for (let i=0; i<days; i++){
+    const d = new Date(start); d.setDate(start.getDate()+i);
+    const key = d.toISOString().slice(0,10);
+    buckets[key] = { key, count:0, label: formatDayLabel(d) };
+  }
+
+  pages.forEach(p => {
+    const prop = p.properties[createdProp];
+    let iso = null;
+    if (prop){
+      if (prop.type === 'created_time') iso = prop.created_time;
+      else if (prop.type === 'date' && prop.date) iso = prop.date.start;
+    }
+    if (!iso) iso = p.created_time;
+    if (!iso) return;
+    const key = iso.slice(0,10);
+    if (buckets[key]) buckets[key].count++;
+  });
+
+  return Object.values(buckets);
+}
+
+function formatDayLabel(d){
+  return d.toLocaleDateString('th-TH', {day:'2-digit', month:'short'});
+}
+
+function buildCompleteness(){
+  if (!schema) return [];
+  const props = Object.entries(schema.properties);
+  const total = pages.length;
+  if (!total) return [];
+  const readOnly = new Set(['created_time','last_edited_time','created_by','last_edited_by','formula','rollup','relation']);
+  return props
+    .filter(([,s]) => !readOnly.has(s.type))
+    .map(([name, s]) => {
+      let filled = 0;
+      pages.forEach(p => {
+        const v = p.properties[name];
+        if (!v) return;
+        if (isPropFilled(v)) filled++;
+      });
+      return { name, type:s.type, filled, total, pct: Math.round(filled/total*100) };
+    })
+    .sort((a,b) => b.pct - a.pct);
+}
+
+function isPropFilled(v){
+  switch(v.type){
+    case 'title': return (v.title || []).some(t=>t.plain_text.trim());
+    case 'rich_text': return (v.rich_text || []).some(t=>t.plain_text.trim());
+    case 'number': return v.number !== null && v.number !== undefined;
+    case 'select': return !!v.select;
+    case 'status': return !!v.status;
+    case 'multi_select': return (v.multi_select || []).length > 0;
+    case 'date': return !!v.date;
+    case 'checkbox': return v.checkbox === true;
+    case 'url': return !!v.url;
+    case 'email': return !!v.email;
+    case 'phone_number': return !!v.phone_number;
+    case 'people': return (v.people || []).length > 0;
+    case 'files': return (v.files || []).length > 0;
+    default: return false;
+  }
+}
+
+function escapeHtml(s){
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+</script>
+
+</body>
+</html>
