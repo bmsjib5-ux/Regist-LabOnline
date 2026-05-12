@@ -1,16 +1,69 @@
 {
-  "name": "notion-gallery-app",
-  "version": "1.0.0",
-  "description": "Notion database gallery viewer with CRUD operations",
-  "main": "server.js",
+  "name": "regist-labonline",
+  "productName": "Regist LabOnline",
+  "version": "1.1.0",
+  "description": "Notion-backed lab registration gallery + insight dashboard",
+  "author": "bmsjib5-ux",
+  "main": "main.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "electron": "electron .",
+    "dev": "electron .",
+    "pack": "electron-builder --win --dir",
+    "build": "electron-builder --win"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "electron": "^41.2.2",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.bmsjib5.regist-labonline",
+    "productName": "Regist LabOnline",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "server.js",
+      "index.html",
+      "dashboard.html",
+      "package.json",
+      "!dist/**",
+      "!release/**",
+      "!**/.env",
+      "!.claude/**"
+    ],
+    "extraResources": [
+      {
+        "from": ".env",
+        "to": ".env"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Regist LabOnline",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false
+    }
   }
 }

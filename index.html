@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Notion Gallery</title>
+<title>Regist LabOnline · Gallery</title>
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/svg+xml" href="/icon.svg" />
+<meta name="theme-color" content="#d4532d" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="LabOnline" />
+<link rel="apple-touch-icon" href="/icon.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -120,7 +127,7 @@
   }
   .overview-link:hover{color:var(--accent)}
   .kpi-grid{
-    display:grid;grid-template-columns:repeat(4, 1fr);gap:16px;
+    display:grid;grid-template-columns:repeat(5, 1fr);gap:16px;
   }
   .kpi-card{
     background:var(--bg-card);border:1px solid var(--line);border-radius:16px;
@@ -146,6 +153,53 @@
   .kpi-card.green .kpi-num{color:#2d7a2f} .kpi-card.green .kpi-dot{background:#2d7a2f}
   .kpi-card.yellow .kpi-num{color:#b88918} .kpi-card.yellow .kpi-dot{background:#b88918}
   .kpi-card.red .kpi-num{color:#a83028} .kpi-card.red .kpi-dot{background:#a83028}
+  .kpi-card.blue .kpi-num{color:#2c5aa0} .kpi-card.blue .kpi-dot{background:#2c5aa0}
+
+  /* —— Status Breakdown (donut + legend) —— */
+  .status-card{
+    margin-top:16px;background:var(--bg-card);border:1px solid var(--line);
+    border-radius:16px;padding:24px 28px;box-shadow:var(--shadow-sm);
+    display:flex;align-items:center;gap:32px;flex-wrap:wrap;
+  }
+  .status-donut{flex-shrink:0;position:relative;width:140px;height:140px}
+  .status-donut svg{transform:rotate(-90deg);width:100%;height:100%}
+  .status-center{
+    position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+  }
+  .status-center .big{
+    font-family:'Fraunces',serif;font-size:28px;font-weight:500;line-height:1;
+    letter-spacing:-.01em;
+  }
+  .status-center .sml{
+    font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;
+    text-transform:uppercase;letter-spacing:.1em;margin-top:4px;
+  }
+  .status-meta{flex:1;min-width:0}
+  .status-meta-title{
+    font-family:'Fraunces',serif;font-weight:500;font-size:18px;
+    letter-spacing:-.01em;margin-bottom:4px;
+  }
+  .status-meta-sub{
+    font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;
+    text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;
+  }
+  .status-legend{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+    gap:12px 20px;
+  }
+  .status-legend-row{display:flex;align-items:center;gap:10px;font-size:13px}
+  .status-legend-sw{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+  .status-legend-name{flex:1;color:var(--ink-soft)}
+  .status-legend-val{font-family:'JetBrains Mono',monospace;font-weight:500;color:var(--ink)}
+  .status-legend-pct{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+    margin-left:6px;min-width:36px;text-align:right;
+  }
+  @media (max-width:640px){
+    .status-card{gap:20px;padding:20px;justify-content:center}
+    .status-meta{text-align:center}
+    .status-legend{grid-template-columns:1fr 1fr}
+  }
 
   /* —— Toolbar —— */
   .toolbar{
@@ -373,8 +427,14 @@
     font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);
   }
 
-  @media (max-width:900px){
+  @media (max-width:1100px){
+    .kpi-grid{grid-template-columns:repeat(3, 1fr)}
+  }
+  @media (max-width:700px){
     .kpi-grid{grid-template-columns:repeat(2, 1fr)}
+  }
+  @media (max-width:440px){
+    .kpi-grid{grid-template-columns:1fr}
   }
   @media (max-width:640px){
     .overview{padding:32px 20px 12px}
@@ -442,6 +502,20 @@
       <div class="kpi-label"><span class="kpi-dot"></span>Rejected</div>
       <div class="kpi-num" id="kpiRejected">—</div>
       <div class="kpi-sub">ไม่อนุมัติ</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label"><span class="kpi-dot"></span>PCU</div>
+      <div class="kpi-num" id="kpiPCU">—</div>
+      <div class="kpi-sub" id="kpiPCUSub">หน่วยปฐมภูมิ</div>
+    </div>
+  </div>
+
+  <div class="status-card" id="statusCard">
+    <div class="status-donut" id="statusDonut"></div>
+    <div class="status-meta">
+      <div class="status-meta-title">Status Breakdown</div>
+      <div class="status-meta-sub">การกระจายตามสถานะการอนุมัติ</div>
+      <div class="status-legend" id="statusLegend"></div>
     </div>
   </div>
 </section>
@@ -617,11 +691,16 @@ async function loadData(silent=false){
 }
 
 // ————— Overview KPIs —————
+const STATUS_COLOR = {
+  yellow:'#e8b94a', green:'#4da54f', red:'#d4533c', orange:'#e8844a',
+  blue:'#4a7cc9', pink:'#d87090', purple:'#8a6ec9', brown:'#a3785c',
+  gray:'#b8b0a0', default:'#a3978a'
+};
+
 function renderOverview(){
   const total = pages.length;
   document.getElementById('kpiTotal').textContent = total;
 
-  // find status property by type
   const statusEntry = Object.entries(dbSchema.properties || {}).find(([,s]) => s.type === 'status');
   const counts = { 'รอดำเนินการ':0, 'อนุมัติแล้ว':0, 'ไม่อนุมัติ':0 };
   if (statusEntry){
@@ -634,6 +713,78 @@ function renderOverview(){
   document.getElementById('kpiPending').textContent  = counts['รอดำเนินการ'];
   document.getElementById('kpiApproved').textContent = counts['อนุมัติแล้ว'];
   document.getElementById('kpiRejected').textContent = counts['ไม่อนุมัติ'];
+
+  // PCU: sum of จำนวนPCU number field across all records
+  const pcuField = Object.keys(dbSchema.properties || {}).find(k =>
+    /จำนวนpcu|pcu/i.test(k) && dbSchema.properties[k].type === 'number'
+  );
+  let pcuSum = 0, pcuRecords = 0;
+  if (pcuField){
+    pages.forEach(p => {
+      const v = p.properties[pcuField]?.number;
+      if (typeof v === 'number'){ pcuSum += v; pcuRecords++; }
+    });
+  }
+  document.getElementById('kpiPCU').textContent = pcuSum;
+  document.getElementById('kpiPCUSub').textContent =
+    pcuField ? `หน่วยปฐมภูมิ · รวมจาก ${pcuRecords} records` : 'หน่วยปฐมภูมิ';
+
+  renderStatusBreakdown();
+}
+
+function renderStatusBreakdown(){
+  const donutEl = document.getElementById('statusDonut');
+  const legendEl = document.getElementById('statusLegend');
+  const statusEntry = Object.entries(dbSchema.properties || {}).find(([,s]) => s.type === 'status');
+  if (!statusEntry){
+    donutEl.innerHTML = '';
+    legendEl.innerHTML = '<div style="color:var(--muted);font-size:12px">— ไม่พบ status property</div>';
+    return;
+  }
+  const [sName, sSchema] = statusEntry;
+  const items = sSchema.status.options.map(o => ({ name:o.name, color:o.color, count:0 }));
+  pages.forEach(p => {
+    const v = p.properties[sName]?.status?.name;
+    const entry = items.find(c => c.name === v);
+    if (entry) entry.count++;
+  });
+
+  const total = items.reduce((s,x)=>s+x.count, 0);
+  const r = 58, circ = 2 * Math.PI * r;
+  let offset = 0;
+  const visible = items.filter(it => it.count > 0);
+  const segs = visible.map(it => {
+    const dash = (it.count / (total||1)) * circ;
+    const seg = `<circle cx="70" cy="70" r="${r}" fill="none"
+      stroke="${STATUS_COLOR[it.color]||STATUS_COLOR.default}"
+      stroke-width="20"
+      stroke-dasharray="${dash} ${circ-dash}"
+      stroke-dashoffset="${-offset}"/>`;
+    offset += dash;
+    return seg;
+  }).join('');
+
+  donutEl.innerHTML = `
+    <svg viewBox="0 0 140 140">
+      <circle cx="70" cy="70" r="${r}" fill="none" stroke="#f3ede0" stroke-width="20"/>
+      ${segs}
+    </svg>
+    <div class="status-center">
+      <div>
+        <div class="big">${total}</div>
+        <div class="sml">records</div>
+      </div>
+    </div>`;
+
+  legendEl.innerHTML = items.map(it => {
+    const pct = total ? Math.round(it.count/total*100) : 0;
+    return `<div class="status-legend-row">
+      <span class="status-legend-sw" style="background:${STATUS_COLOR[it.color]||STATUS_COLOR.default}"></span>
+      <span class="status-legend-name">${escapeHtml(it.name)}</span>
+      <span class="status-legend-val">${it.count}</span>
+      <span class="status-legend-pct">${pct}%</span>
+    </div>`;
+  }).join('');
 }
 
 // ————— Render —————
@@ -1091,6 +1242,14 @@ function escapeHtml(s){
   return String(s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+// ————— PWA: Service Worker registration —————
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .catch(err => console.warn('SW registration failed:', err));
+  });
 }
 </script>
 

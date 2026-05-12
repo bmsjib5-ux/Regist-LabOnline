@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Insight · Notion Gallery</title>
+<title>Regist LabOnline · Insight</title>
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/svg+xml" href="/icon.svg" />
+<meta name="theme-color" content="#d4532d" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="LabOnline" />
+<link rel="apple-touch-icon" href="/icon.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -169,6 +176,8 @@
   .kpi.yellow .kpi-dot{background:var(--yellow)}
   .kpi.red .kpi-num{color:var(--red)}
   .kpi.red .kpi-dot{background:var(--red)}
+  .kpi.blue .kpi-num{color:var(--blue)}
+  .kpi.blue .kpi-dot{background:var(--blue)}
 
   /* —— Card header (for chart cards) —— */
   .card-head{
@@ -198,7 +207,8 @@
   .hbar-list{display:flex;flex-direction:column;gap:18px}
   .hbar-row{display:flex;flex-direction:column;gap:6px}
   .hbar-meta{display:flex;justify-content:space-between;font-size:13px}
-  .hbar-name{color:var(--ink-soft);font-weight:500}
+  .hbar-name{color:var(--ink-soft);font-weight:500;display:inline-flex;align-items:center;gap:8px}
+  .hbar-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
   .hbar-val{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:12px}
   .hbar-track{height:8px;background:#f3ede0;border-radius:99px;overflow:hidden}
   .hbar-fill{
@@ -210,6 +220,13 @@
 
   /* —— Ranked list —— */
   .rank-list{display:flex;flex-direction:column;gap:2px}
+  .card.span-12 .rank-list{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+    gap:0 32px;
+  }
+  @media (max-width:640px){
+    .card.span-12 .rank-list{grid-template-columns:1fr}
+  }
   .rank-row{
     display:flex;align-items:center;gap:16px;padding:14px 0;
     border-bottom:1px solid var(--line);
@@ -480,9 +497,17 @@ async function loadData(silent=false){
 // ————— Helpers —————
 function getText(p){
   if (!p) return '';
-  if (p.type === 'rich_text') return p.rich_text.map(t=>t.plain_text).join('').trim();
-  if (p.type === 'title') return p.title.map(t=>t.plain_text).join('').trim();
-  return '';
+  switch(p.type){
+    case 'rich_text':   return p.rich_text.map(t=>t.plain_text).join('').trim();
+    case 'title':       return p.title.map(t=>t.plain_text).join('').trim();
+    case 'select':      return p.select ? p.select.name : '';
+    case 'status':      return p.status ? p.status.name : '';
+    case 'multi_select':return (p.multi_select || []).map(t=>t.name).join(', ');
+    case 'phone_number':return p.phone_number || '';
+    case 'email':       return p.email || '';
+    case 'url':         return p.url || '';
+    default:            return '';
+  }
 }
 function getTitle(page){
   const t = Object.values(page.properties).find(p=>p.type==='title');
@@ -521,7 +546,8 @@ function render(){
   const statusName = propNameByType('status') || propNameLike('สถานะ','status');
   const hospitalName = propNameLike('โรงพยาบาล','สถานพยาบาล','hospital');
   const positionName = propNameLike('ตำแหน่ง','position');
-  const coordinatorName = propNameLike('ผู้ประสานงาน','coordinator');
+  const operatorName = propNameLike('ผู้ดำเนินการ','ผู้ประสานงาน','coordinator','operator','handler');
+  const recommenderName = propNameLike('ผู้แนะนำ','recommender','referrer','referred');
   const phoneName = propNameByType('phone_number');
   const createdName = propNameByType('created_time') || propNameLike('วันที่','date');
 
@@ -556,10 +582,40 @@ function render(){
     ? countBy(pages, p => getText(p.properties[positionName])).slice(0,6)
     : [];
 
-  // Coordinator ranking
-  const coordinatorCounts = coordinatorName
-    ? countBy(pages, p => getText(p.properties[coordinatorName])).slice(0,5)
+  // Operator ranking (who processed the case — ผู้ดำเนินการ)
+  const operatorCounts = operatorName
+    ? countBy(pages, p => getText(p.properties[operatorName])).slice(0,5)
     : [];
+
+  // Recommender ranking (who referred — ผู้แนะนำ)
+  const recommenderCounts = recommenderName
+    ? countBy(pages, p => getText(p.properties[recommenderName])).slice(0,8)
+    : [];
+
+  // PCU total: SUM of "จำนวนPCU" number field across all records
+  const pcuFieldName = propNameLike('จำนวนpcu','จำนวน pcu','pcu count','pcu');
+  let pcuSum = 0;
+  let pcuRecords = 0;
+  if (pcuFieldName){
+    pages.forEach(p => {
+      const v = p.properties[pcuFieldName]?.number;
+      if (typeof v === 'number'){ pcuSum += v; pcuRecords++; }
+    });
+  }
+
+  // System usage breakdown (ใช้ระบบ select field)
+  const systemName = propNameLike('ใช้ระบบ','ระบบที่ใช้','system');
+  let systemBreakdown = [];
+  if (systemName && schema.properties[systemName].type === 'select'){
+    const opts = schema.properties[systemName].select.options;
+    const byName = {};
+    opts.forEach(o => byName[o.name] = { name:o.name, color:o.color, count:0 });
+    pages.forEach(p => {
+      const v = p.properties[systemName]?.select?.name;
+      if (v && byName[v]) byName[v].count++;
+    });
+    systemBreakdown = Object.values(byName).sort((a,b) => b.count - a.count);
+  }
 
   // Timeline (last 30 days)
   const timeline = buildTimeline(pages, createdName, 30);
@@ -575,11 +631,16 @@ function render(){
     ${kpiCard('Approved', approved, 'อนุมัติแล้ว', 'green')}
     ${kpiCard('Rejected', rejected, 'ไม่อนุมัติ', 'red')}
 
+    ${kpiCard('PCU', pcuSum, `หน่วยปฐมภูมิ · รวมจาก ${pcuRecords} records`, 'blue', 'span-3')}
+    ${systemBarCard('System Usage', `ระบบที่ใช้ · ${systemName || 'ใช้ระบบ'}`, systemBreakdown, total)}
+
     ${donutCard('Status', 'การกระจายตามสถานะ', statusBreakdown, total)}
     ${barCard('Top Hospitals', 'โรงพยาบาล/สถานพยาบาล (Top 5)', hospitalCounts, total)}
 
     ${barCard('Positions', 'กระจายตามตำแหน่ง', positionCounts, total, true)}
-    ${rankCard('Top Coordinators', 'ผู้ประสานงานยอดนิยม', coordinatorCounts)}
+    ${rankCard('Top Operators', `${operatorName || 'ผู้ดำเนินการ'}ยอดนิยม`, operatorCounts)}
+
+    ${rankCard('Top Recommenders', `${recommenderName || 'ผู้แนะนำ'}ยอดนิยม`, recommenderCounts, 'span-12')}
 
     ${timelineCard('Registrations', '30 วันย้อนหลัง', timeline)}
 
@@ -598,14 +659,15 @@ function render(){
 }
 
 // ————— Card builders —————
-function kpiCard(label, num, sub, cls=''){
+function kpiCard(label, num, sub, cls='', span='span-3'){
   return `
-    <div class="card kpi span-3 ${cls}">
+    <div class="card kpi ${span} ${cls}">
       <div class="kpi-label"><span class="kpi-dot"></span>${escapeHtml(label)}</div>
       <div class="kpi-num">${num}</div>
       <div class="kpi-sub">${escapeHtml(sub)}</div>
     </div>`;
 }
+
 
 function donutCard(title, sub, items, total){
   if (!items.length){
@@ -679,9 +741,34 @@ function barCard(title, sub, items, total, soft=false){
   return `<div class="card span-6">${cardHead(title, sub)}<div class="hbar-list">${rows}</div></div>`;
 }
 
-function rankCard(title, sub, items){
+function systemBarCard(title, sub, items, total, span='span-9'){
   if (!items.length){
-    return `<div class="card span-6">${cardHead(title, sub)}<div class="empty-small">— ไม่มีข้อมูล</div></div>`;
+    return `<div class="card ${span}">${cardHead(title, sub)}<div class="empty-small">— ไม่พบข้อมูลระบบที่ใช้</div></div>`;
+  }
+  const max = Math.max(...items.map(i => i.count), 1);
+  const rows = items.map(it => {
+    const color = COLOR_BY_NOTION[it.color] || COLOR_BY_NOTION.default;
+    const pct = Math.round(it.count / max * 100);
+    const pctTotal = total ? Math.round(it.count / total * 100) : 0;
+    return `
+      <div class="hbar-row">
+        <div class="hbar-meta">
+          <span class="hbar-name">
+            <span class="hbar-dot" style="background:${color}"></span>${escapeHtml(it.name)}
+          </span>
+          <span class="hbar-val">${it.count} · ${pctTotal}%</span>
+        </div>
+        <div class="hbar-track">
+          <div class="hbar-fill" data-pct="${pct}" style="width:0%;background:${color}"></div>
+        </div>
+      </div>`;
+  }).join('');
+  return `<div class="card ${span}">${cardHead(title, sub)}<div class="hbar-list">${rows}</div></div>`;
+}
+
+function rankCard(title, sub, items, span='span-6'){
+  if (!items.length){
+    return `<div class="card ${span}">${cardHead(title, sub)}<div class="empty-small">— ไม่มีข้อมูล</div></div>`;
   }
   const rows = items.map(([name, n], i) => `
     <div class="rank-row">
@@ -690,7 +777,7 @@ function rankCard(title, sub, items){
       <div class="rank-count">${n}<span class="rank-count-unit">records</span></div>
     </div>
   `).join('');
-  return `<div class="card span-6">${cardHead(title, sub)}<div class="rank-list">${rows}</div></div>`;
+  return `<div class="card ${span}">${cardHead(title, sub)}<div class="rank-list">${rows}</div></div>`;
 }
 
 function timelineCard(title, sub, series){
@@ -1017,6 +1104,14 @@ function escapeHtml(s){
   return String(s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+// ————— PWA: Service Worker registration —————
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .catch(err => console.warn('SW registration failed:', err));
+  });
 }
 </script>
 

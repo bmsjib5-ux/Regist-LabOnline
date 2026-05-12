@@ -21,3 +21,9 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Electron build output
+dist/
+out/
+release/
+*.exe

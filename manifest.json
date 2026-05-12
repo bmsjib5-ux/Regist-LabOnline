@@ -1,0 +1,37 @@
+{
+  "name": "Regist LabOnline",
+  "short_name": "LabOnline",
+  "description": "Notion-backed lab registration gallery + insight dashboard",
+  "lang": "th",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#faf8f3",
+  "theme_color": "#d4532d",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Gallery",
+      "short_name": "Gallery",
+      "description": "ดูข้อมูลแบบ Gallery / Grid",
+      "url": "/",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Insight Dashboard",
+      "short_name": "Insight",
+      "description": "สรุปสถิติและกราฟ",
+      "url": "/dashboard.html",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    }
+  ],
+  "categories": ["productivity", "business", "medical"]
+}
