@@ -155,9 +155,17 @@
   .kpi-card.red .kpi-num{color:#a83028} .kpi-card.red .kpi-dot{background:#a83028}
   .kpi-card.blue .kpi-num{color:#2c5aa0} .kpi-card.blue .kpi-dot{background:#2c5aa0}
 
+  /* —— Breakdown grid (Status + System donuts side by side) —— */
+  .breakdown-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:16px;
+  }
+  @media (max-width:900px){
+    .breakdown-grid{grid-template-columns:1fr}
+  }
+
   /* —— Status Breakdown (donut + legend) —— */
   .status-card{
-    margin-top:16px;background:var(--bg-card);border:1px solid var(--line);
+    background:var(--bg-card);border:1px solid var(--line);
     border-radius:16px;padding:24px 28px;box-shadow:var(--shadow-sm);
     display:flex;align-items:center;gap:32px;flex-wrap:wrap;
   }
@@ -184,8 +192,8 @@
     text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;
   }
   .status-legend{
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
-    gap:12px 20px;
+    display:grid;grid-template-columns:1fr;
+    gap:10px 20px;
   }
   .status-legend-row{display:flex;align-items:center;gap:10px;font-size:13px}
   .status-legend-sw{width:10px;height:10px;border-radius:3px;flex-shrink:0}
@@ -220,6 +228,18 @@
     color:var(--muted);
   }
 
+  /* —— Filter dropdown —— */
+  .filter-select{
+    padding:10px 14px;border:1px solid var(--line);border-radius:10px;
+    background:#fff;font-family:inherit;font-size:13px;color:var(--ink);
+    cursor:pointer;transition:border-color .15s;min-width:160px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8580' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;
+    appearance:none;-webkit-appearance:none;padding-right:32px;
+  }
+  .filter-select:focus{outline:none;border-color:var(--accent)}
+  .filter-select.active{border-color:var(--accent);background-color:var(--accent-soft);color:var(--accent);font-weight:500}
+
   /* —— View Toggle —— */
   .view-toggle{
     display:flex;gap:2px;background:#eee8db;padding:4px;border-radius:10px;
@@ -239,7 +259,10 @@
     display:grid;gap:24px;
     grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
   }
-  .gallery.mode-grid{display:block;padding-bottom:80px}
+  .gallery.mode-grid{
+    display:block;max-width:none;
+    padding:0 24px 80px;
+  }
 
   /* —— Data Table (Grid view) —— */
   .dg-card{
@@ -510,12 +533,22 @@
     </div>
   </div>
 
-  <div class="status-card" id="statusCard">
-    <div class="status-donut" id="statusDonut"></div>
-    <div class="status-meta">
-      <div class="status-meta-title">Status Breakdown</div>
-      <div class="status-meta-sub">การกระจายตามสถานะการอนุมัติ</div>
-      <div class="status-legend" id="statusLegend"></div>
+  <div class="breakdown-grid">
+    <div class="status-card" id="statusCard">
+      <div class="status-donut" id="statusDonut"></div>
+      <div class="status-meta">
+        <div class="status-meta-title">Status Breakdown</div>
+        <div class="status-meta-sub">การกระจายตามสถานะการอนุมัติ</div>
+        <div class="status-legend" id="statusLegend"></div>
+      </div>
+    </div>
+    <div class="status-card" id="systemCard">
+      <div class="status-donut" id="systemDonut"></div>
+      <div class="status-meta">
+        <div class="status-meta-title">System Usage</div>
+        <div class="status-meta-sub">การกระจายตามระบบที่ใช้งาน</div>
+        <div class="status-legend" id="systemLegend"></div>
+      </div>
     </div>
   </div>
 </section>
@@ -525,6 +558,9 @@
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
     <input type="text" id="searchInput" placeholder="Search…" />
   </div>
+  <select class="filter-select" id="systemFilter" aria-label="Filter by ใช้ระบบ">
+    <option value="">ทุกระบบ</option>
+  </select>
   <div class="view-toggle" role="tablist" aria-label="View mode">
     <button type="button" id="viewCardsBtn" class="active" aria-pressed="true">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -573,6 +609,8 @@ let autoTimer = null;
 let autoEnabled = true;
 let viewMode = localStorage.getItem('viewMode') || 'cards';  // 'cards' | 'grid'
 let gridSort = { col: null, dir: 'desc' };
+let systemFilter = '';  // '' = ทุกระบบ, else = option name from schema
+let systemPropName = null;  // resolved property name for ใช้ระบบ
 
 // ————— Init —————
 window.addEventListener('DOMContentLoaded', init);
@@ -585,6 +623,11 @@ document.getElementById('modal').onclick = (e) => {
 document.getElementById('autoBtn').onclick = toggleAuto;
 document.getElementById('viewCardsBtn').onclick = () => setView('cards');
 document.getElementById('viewGridBtn').onclick = () => setView('grid');
+document.getElementById('systemFilter').onchange = (e) => {
+  systemFilter = e.target.value;
+  e.target.classList.toggle('active', !!systemFilter);
+  renderGallery();
+};
 document.addEventListener('visibilitychange', () => {
   if (!autoEnabled) return;
   if (document.hidden) stopAutoTimer();
@@ -671,6 +714,7 @@ async function loadData(silent=false){
     pages = (data.results || []).filter(p => !p.in_trash && !p.archived);
 
     renderOverview();
+    populateSystemFilter();
     renderGallery();
   } catch (err) {
     if (silent){
@@ -701,18 +745,22 @@ function renderOverview(){
   const total = pages.length;
   document.getElementById('kpiTotal').textContent = total;
 
+  // Count statuses by COLOR (not by name) so renaming options doesn't break KPIs
   const statusEntry = Object.entries(dbSchema.properties || {}).find(([,s]) => s.type === 'status');
-  const counts = { 'รอดำเนินการ':0, 'อนุมัติแล้ว':0, 'ไม่อนุมัติ':0 };
+  const byColor = { yellow:0, green:0, red:0 };
   if (statusEntry){
-    const [statusName] = statusEntry;
+    const [statusName, statusSchema] = statusEntry;
+    const colorByName = {};
+    statusSchema.status.options.forEach(opt => { colorByName[opt.name] = opt.color; });
     pages.forEach(p => {
       const v = p.properties[statusName]?.status?.name;
-      if (v && counts[v] !== undefined) counts[v]++;
+      const c = v ? colorByName[v] : null;
+      if (c && byColor[c] !== undefined) byColor[c]++;
     });
   }
-  document.getElementById('kpiPending').textContent  = counts['รอดำเนินการ'];
-  document.getElementById('kpiApproved').textContent = counts['อนุมัติแล้ว'];
-  document.getElementById('kpiRejected').textContent = counts['ไม่อนุมัติ'];
+  document.getElementById('kpiPending').textContent  = byColor.yellow;
+  document.getElementById('kpiApproved').textContent = byColor.green;
+  document.getElementById('kpiRejected').textContent = byColor.red;
 
   // PCU: sum of จำนวนPCU number field across all records
   const pcuField = Object.keys(dbSchema.properties || {}).find(k =>
@@ -730,25 +778,10 @@ function renderOverview(){
     pcuField ? `หน่วยปฐมภูมิ · รวมจาก ${pcuRecords} records` : 'หน่วยปฐมภูมิ';
 
   renderStatusBreakdown();
+  renderSystemBreakdown();
 }
 
-function renderStatusBreakdown(){
-  const donutEl = document.getElementById('statusDonut');
-  const legendEl = document.getElementById('statusLegend');
-  const statusEntry = Object.entries(dbSchema.properties || {}).find(([,s]) => s.type === 'status');
-  if (!statusEntry){
-    donutEl.innerHTML = '';
-    legendEl.innerHTML = '<div style="color:var(--muted);font-size:12px">— ไม่พบ status property</div>';
-    return;
-  }
-  const [sName, sSchema] = statusEntry;
-  const items = sSchema.status.options.map(o => ({ name:o.name, color:o.color, count:0 }));
-  pages.forEach(p => {
-    const v = p.properties[sName]?.status?.name;
-    const entry = items.find(c => c.name === v);
-    if (entry) entry.count++;
-  });
-
+function renderDonut(donutEl, legendEl, items){
   const total = items.reduce((s,x)=>s+x.count, 0);
   const r = 58, circ = 2 * Math.PI * r;
   let offset = 0;
@@ -787,20 +820,88 @@ function renderStatusBreakdown(){
   }).join('');
 }
 
+function renderStatusBreakdown(){
+  const donutEl = document.getElementById('statusDonut');
+  const legendEl = document.getElementById('statusLegend');
+  const statusEntry = Object.entries(dbSchema.properties || {}).find(([,s]) => s.type === 'status');
+  if (!statusEntry){
+    donutEl.innerHTML = '';
+    legendEl.innerHTML = '<div style="color:var(--muted);font-size:12px">— ไม่พบ status property</div>';
+    return;
+  }
+  const [sName, sSchema] = statusEntry;
+  const items = sSchema.status.options.map(o => ({ name:o.name, color:o.color, count:0 }));
+  pages.forEach(p => {
+    const v = p.properties[sName]?.status?.name;
+    const entry = items.find(c => c.name === v);
+    if (entry) entry.count++;
+  });
+  renderDonut(donutEl, legendEl, items);
+}
+
+function renderSystemBreakdown(){
+  const donutEl = document.getElementById('systemDonut');
+  const legendEl = document.getElementById('systemLegend');
+  const systemEntry = Object.entries(dbSchema.properties || {}).find(([name, s]) =>
+    s.type === 'select' && /ใช้ระบบ|ระบบที่ใช้|system/i.test(name)
+  );
+  if (!systemEntry){
+    donutEl.innerHTML = '';
+    legendEl.innerHTML = '<div style="color:var(--muted);font-size:12px">— ไม่พบ field "ใช้ระบบ"</div>';
+    return;
+  }
+  const [sName, sSchema] = systemEntry;
+  const items = sSchema.select.options.map(o => ({ name:o.name, color:o.color, count:0 }));
+  pages.forEach(p => {
+    const v = p.properties[sName]?.select?.name;
+    const entry = items.find(c => c.name === v);
+    if (entry) entry.count++;
+  });
+  items.sort((a, b) => b.count - a.count);
+  renderDonut(donutEl, legendEl, items);
+}
+
+// ————— System filter helpers —————
+function populateSystemFilter(){
+  const sel = document.getElementById('systemFilter');
+  if (!dbSchema || !sel) return;
+  // find select-type property whose name matches "ใช้ระบบ"
+  const entry = Object.entries(dbSchema.properties).find(([k, s]) =>
+    s.type === 'select' && /ใช้ระบบ|ระบบที่ใช้|system/i.test(k)
+  );
+  if (!entry){ sel.style.display = 'none'; return; }
+  sel.style.display = '';
+  systemPropName = entry[0];
+  const options = entry[1].select.options || [];
+  const prev = systemFilter;
+  sel.innerHTML = '<option value="">ทุกระบบ</option>' +
+    options.map(o => `<option value="${escapeHtml(o.name)}">${escapeHtml(o.name)}</option>`).join('');
+  // keep selection across reloads if still valid
+  if (prev && options.some(o => o.name === prev)) sel.value = prev;
+  else { sel.value = ''; systemFilter = ''; }
+  sel.classList.toggle('active', !!systemFilter);
+}
+
 // ————— Render —————
 function renderGallery(){
   const gallery = document.getElementById('gallery');
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
 
-  const filtered = q ? pages.filter(p => {
-    const txt = JSON.stringify(p.properties).toLowerCase();
-    return txt.includes(q);
-  }) : pages;
+  let filtered = pages;
+  if (systemFilter && systemPropName){
+    filtered = filtered.filter(p => p.properties[systemPropName]?.select?.name === systemFilter);
+  }
+  if (q){
+    filtered = filtered.filter(p => JSON.stringify(p.properties).toLowerCase().includes(q));
+  }
 
   if (!filtered.length) {
+    const hasFilter = !!q || !!systemFilter;
     gallery.innerHTML = `<div class="status">
-      <div class="empty-icon">${q ? '🔍' : '📭'}</div>
-      <p>${q ? 'No matching items found' : 'No entries yet. Click "New Entry" to create one.'}</p>
+      <div class="empty-icon">${hasFilter ? '🔍' : '📭'}</div>
+      <p>${hasFilter
+        ? `ไม่พบรายการที่ตรง${systemFilter ? ` (ระบบ: ${escapeHtml(systemFilter)})` : ''}${q ? ` (ค้นหา: ${escapeHtml(q)})` : ''}`
+        : 'No entries yet. Click "New Entry" to create one.'}</p>
     </div>`;
     return;
   }
@@ -977,15 +1078,26 @@ function renderCard(page){
     if (t){ title = t; titleKey = nameEntry[0]; }
   }
 
-  // Body: person name first (as sub-identity), then the rest — excluding whatever was used as the title
-  const body = [];
-  if (nameEntry && nameEntry[0] !== titleKey) body.push(nameEntry);
-  Object.entries(props).forEach(([name, p]) => {
-    if (name === titleKey) return;
-    if (p.type === 'title') return;  // already added above
-    body.push([name, p]);
-  });
-  const shown = body.slice(0, 5);
+  // Body: prioritize key fields (name, status, system, etc.), then the rest
+  const priorityPatterns = [
+    /ชื่อ|name/i,           // person name (title)
+    /สถานะ|status/i,         // status
+    /ใช้ระบบ|ระบบ|system/i,  // system
+    /โรงพยาบาล|hospital/i,   // hospital (if not the title)
+    /ตำแหน่ง|position/i,     // position
+    /ผู้ดำเนินการ|operator/i, // operator
+    /ผู้แนะนำ|recommender/i,  // recommender
+    /pcu/i,                  // pcu count
+    /เบอร์|phone/i,          // phone
+  ];
+  const allBody = Object.entries(props).filter(([name, p]) => name !== titleKey && p.type !== 'title');
+  if (nameEntry && nameEntry[0] !== titleKey) allBody.unshift(nameEntry);
+  const score = (entry) => {
+    const idx = priorityPatterns.findIndex(re => re.test(entry[0]));
+    return idx === -1 ? 99 : idx;
+  };
+  const body = [...allBody].sort((a, b) => score(a) - score(b));
+  const shown = body.slice(0, 7);
 
   return `
     <div class="card" data-id="${page.id}">

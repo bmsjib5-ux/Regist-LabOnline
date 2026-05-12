@@ -53,7 +53,7 @@
     position:sticky;top:0;z-index:50;
   }
   .topbar-inner{
-    max-width:1400px;margin:0 auto;padding:18px 32px;
+    max-width:none;margin:0 auto;padding:18px 32px;
     display:flex;align-items:center;justify-content:space-between;gap:24px;
   }
   .brand{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit}
@@ -98,7 +98,7 @@
 
   /* —— Hero —— */
   .hero{
-    max-width:1400px;margin:0 auto;padding:48px 32px 24px;
+    max-width:none;margin:0 auto;padding:48px 32px 24px;
   }
   .eyebrow{
     font-family:'JetBrains Mono',monospace;font-size:11px;
@@ -135,7 +135,7 @@
 
   /* —— Layout grid —— */
   .grid{
-    max-width:1400px;margin:0 auto;padding:24px 32px 80px;
+    max-width:none;margin:0 auto;padding:24px 32px 80px;
     display:grid;gap:20px;
     grid-template-columns:repeat(12, 1fr);
   }
@@ -147,10 +147,16 @@
   .card:hover{box-shadow:var(--shadow-md)}
 
   /* grid spans */
+  .span-2{grid-column:span 2}
   .span-3{grid-column:span 3}
   .span-4{grid-column:span 4}
+  .span-5{grid-column:span 5}
   .span-6{grid-column:span 6}
+  .span-7{grid-column:span 7}
   .span-8{grid-column:span 8}
+  .span-9{grid-column:span 9}
+  .span-10{grid-column:span 10}
+  .span-11{grid-column:span 11}
   .span-12{grid-column:span 12}
 
   /* —— KPI card —— */
@@ -182,10 +188,15 @@
   /* —— Card header (for chart cards) —— */
   .card-head{
     display:flex;justify-content:space-between;align-items:baseline;
+    gap:12px;flex-wrap:wrap;
     margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--line);
   }
-  .card-title{font-family:'Fraunces',serif;font-weight:500;font-size:20px;letter-spacing:-.01em}
-  .card-sub{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.1em}
+  .card-title{font-family:'Fraunces',serif;font-weight:500;font-size:20px;letter-spacing:-.01em;line-height:1.2}
+  .card-sub{
+    font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;
+    text-transform:uppercase;letter-spacing:.1em;
+    text-align:right;max-width:60%;line-height:1.4;
+  }
 
   /* —— Donut chart —— */
   .donut-wrap{display:flex;align-items:center;gap:32px;flex-wrap:wrap}
@@ -206,10 +217,14 @@
   /* —— Horizontal bar chart —— */
   .hbar-list{display:flex;flex-direction:column;gap:18px}
   .hbar-row{display:flex;flex-direction:column;gap:6px}
-  .hbar-meta{display:flex;justify-content:space-between;font-size:13px}
-  .hbar-name{color:var(--ink-soft);font-weight:500;display:inline-flex;align-items:center;gap:8px}
+  .hbar-meta{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px}
+  .hbar-name{
+    color:var(--ink-soft);font-weight:500;display:inline-flex;align-items:center;gap:8px;
+    min-width:0;flex:1;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
   .hbar-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-  .hbar-val{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:12px}
+  .hbar-val{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:12px;flex-shrink:0;white-space:nowrap}
   .hbar-track{height:8px;background:#f3ede0;border-radius:99px;overflow:hidden}
   .hbar-fill{
     height:100%;border-radius:99px;
@@ -355,13 +370,18 @@
   .sw-pink{background:#d87090}
   .sw-purple{background:#8a6ec9}
 
-  @media (max-width:900px){
-    .span-3,.span-4,.span-6,.span-8{grid-column:span 12}
+  @media (max-width:1100px){
+    .span-2,.span-3,.span-4,.span-5{grid-column:span 6}
+    .span-7,.span-8,.span-9,.span-10,.span-11{grid-column:span 12}
+  }
+  @media (max-width:720px){
+    .span-2,.span-3,.span-4,.span-5,.span-6,.span-7,.span-8,.span-9,.span-10,.span-11{grid-column:span 12}
     .comp-row{grid-template-columns:140px 1fr 50px}
     .hero,.grid,.topbar-inner{padding-left:20px;padding-right:20px}
     .donut-wrap{justify-content:center}
     .dg-meta{flex-direction:column;align-items:flex-start;gap:8px}
     .dg-search{width:100%}
+    .card-sub{max-width:100%;text-align:left}
   }
 </style>
 </head>
@@ -565,12 +585,14 @@ function render(){
     statusBreakdown = Object.values(byName);
   }
 
-  // Get counts by status name for KPI
-  const byStatus = {};
-  statusBreakdown.forEach(s => byStatus[s.name] = s.count);
-  const approved = byStatus['อนุมัติแล้ว'] || 0;
-  const pending  = byStatus['รอดำเนินการ'] || 0;
-  const rejected = byStatus['ไม่อนุมัติ'] || 0;
+  // Group counts by COLOR (not name) so renamed options still map to right KPI
+  const byColor = { yellow:0, green:0, red:0, blue:0 };
+  statusBreakdown.forEach(s => {
+    if (byColor[s.color] !== undefined) byColor[s.color] += s.count;
+  });
+  const approved = byColor.green;
+  const pending  = byColor.yellow;
+  const rejected = byColor.red;
 
   // Hospital counts
   const hospitalCounts = hospitalName

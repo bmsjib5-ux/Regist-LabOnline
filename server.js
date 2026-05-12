@@ -51,13 +51,34 @@ app.get('/api/database', async (req, res) => {
 // ดึงข้อมูล pages ทั้งหมดใน database
 app.post('/api/query', async (req, res) => {
   try {
-    const r = await fetch(`https://api.notion.com/v1/databases/${DATABASE_ID}/query`, {
-      method: 'POST',
-      headers: notionHeaders,
-      body: JSON.stringify(req.body || {})
-    });
-    const data = await r.json();
-    res.status(r.status).json(data);
+    const baseBody = { ...(req.body || {}) };
+    delete baseBody.start_cursor;
+    baseBody.page_size = 100;
+
+    const allResults = [];
+    let cursor = req.body?.start_cursor || undefined;
+    const MAX_PAGES = 100;
+
+    for (let i = 0; i < MAX_PAGES; i++) {
+      const body = { ...baseBody };
+      if (cursor) body.start_cursor = cursor;
+
+      const r = await fetch(`https://api.notion.com/v1/databases/${DATABASE_ID}/query`, {
+        method: 'POST',
+        headers: notionHeaders,
+        body: JSON.stringify(body)
+      });
+      const data = await r.json();
+      if (!r.ok) return res.status(r.status).json(data);
+
+      allResults.push(...(data.results || []));
+      if (!data.has_more || !data.next_cursor) {
+        return res.json({ object: 'list', results: allResults, has_more: false, next_cursor: null });
+      }
+      cursor = data.next_cursor;
+    }
+    res.json({ object: 'list', results: allResults, has_more: true, next_cursor: cursor,
+               warning: `Truncated at ${MAX_PAGES * 100} records` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
