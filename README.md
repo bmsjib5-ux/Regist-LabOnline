@@ -48,6 +48,42 @@ npm start
 
 ---
 
+## 🌐 แชร์ผ่าน Cloudflare Tunnel (Optional)
+
+ถ้าต้องการแชร์ให้คนอื่นเข้าผ่านอินเทอร์เน็ตชั่วคราว (Quick Tunnel):
+
+### ติดตั้ง cloudflared ครั้งเดียว
+
+- **macOS**: `brew install cloudflared`
+- **Windows**: ดาวน์โหลด `.msi` จาก https://github.com/cloudflare/cloudflared/releases
+- **Linux**: ดาวน์โหลด binary จาก https://github.com/cloudflare/cloudflared/releases
+
+### รัน server + tunnel พร้อมกัน
+
+```bash
+npm run start:tunnel
+```
+
+จะเห็น log แบบนี้:
+
+```
+[server]  🚀 Server running at http://localhost:3000
+[tunnel]  Your quick Tunnel has been created! Visit it at:
+[tunnel]  https://xxx-yyy-zzz.trycloudflare.com
+```
+
+> ⚠️ Quick Tunnel เป็น **URL ชั่วคราว** ทุกครั้งที่รันใหม่จะได้ URL ใหม่
+> กด `Ctrl+C` ปิดทั้งสอง process พร้อมกัน
+
+### หรือรันแยก
+
+```bash
+npm start      # terminal 1
+npm run tunnel # terminal 2
+```
+
+---
+
 ## 📁 ไฟล์ในโปรเจกต์
 
 | ไฟล์ | คำอธิบาย |
