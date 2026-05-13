@@ -60,6 +60,10 @@ npm start
 
 ### รัน server + tunnel พร้อมกัน
 
+**Windows** — ดับเบิลคลิก `start.bat` (ตรวจ Node/cloudflared/`.env`/`node_modules` ให้อัตโนมัติ)
+
+**macOS / Linux** หรือสั่งเอง:
+
 ```bash
 npm run start:tunnel
 ```
