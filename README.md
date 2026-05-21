@@ -134,10 +134,46 @@ People (read), Created Time (read), Last Edited Time (read)
 
 ---
 
-## 🚀 Deploy (Optional)
+## 🚀 Deploy ขึ้น Render (URL ถาวร 24/7)
 
-- **Vercel/Netlify**: แยก `server.js` เป็น serverless function + ตั้งค่า env vars
-- **Railway/Render**: push ทั้งโฟลเดอร์ขึ้น แล้วตั้งค่า env vars
-- **Cloudflare Workers**: แปลง `server.js` เป็น Worker script
+โปรเจกต์มี `render.yaml` (Blueprint) ให้แล้ว ใช้ขั้นตอนนี้ครั้งเดียวจบ:
+
+### 1️⃣ Push โค้ดขึ้น GitHub
+
+```bash
+git push -u origin main
+```
+
+### 2️⃣ สร้าง Blueprint บน Render
+
+1. ไปที่ 👉 https://dashboard.render.com/blueprints
+2. คลิก **New Blueprint Instance**
+3. Connect GitHub แล้วเลือก repository นี้
+4. Render จะอ่าน `render.yaml` อัตโนมัติ → คลิก **Apply**
+
+### 3️⃣ ใส่ค่า Environment Variables
+
+Render จะถาม 2 ค่า (เพราะตั้ง `sync: false` ใน `render.yaml`):
+
+| Key | Value |
+|-----|-------|
+| `NOTION_TOKEN` | `ntn_xxxxxxxxxxxx` (จาก Notion integration) |
+| `DATABASE_ID` | `3491c083c4858041b2a4de88f339a9b0` (จาก URL ของ Notion database) |
+
+### 4️⃣ รอ deploy เสร็จ (~2-3 นาที)
+
+จะได้ URL ถาวรหน้าตา `https://regist-labonline.onrender.com` ใช้ได้เลย 🎉
+
+> ⚠️ **Free tier limitations**:
+> - Server จะ sleep หลัง idle 15 นาที (request แรกหลัง sleep จะช้า ~30 วินาที)
+> - 750 ชั่วโมง/เดือน (พอใช้ 1 service 24/7)
+> - ถ้าอยากให้ตื่นตลอด ใช้ Render paid plan ($7/เดือน) หรือ cron-job.org ping เป็นช่วง ๆ
+
+### Deploy ตัวเลือกอื่น
+
+- **Railway**: push repo → New Project → Deploy from GitHub → ใส่ env vars (auto-detect Node.js)
+- **Cloudflare Tunnel** (รันบนเครื่องเอง): ดูหัวข้อ "แชร์ผ่าน Cloudflare Tunnel" ด้านบน
+- **Vercel/Netlify**: ต้องแยก `server.js` เป็น serverless function ก่อน
+- **Cloudflare Workers**: ต้องแปลง `server.js` เป็น Worker script
 
 Enjoy! 🎉

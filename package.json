@@ -5,6 +5,9 @@
   "description": "Notion-backed lab registration gallery + insight dashboard",
   "author": "bmsjib5-ux",
   "main": "main.js",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node server.js",
     "tunnel": "cloudflared tunnel --url http://localhost:3000",
