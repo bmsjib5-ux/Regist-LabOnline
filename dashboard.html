@@ -341,6 +341,20 @@
   .dg-table td.dg-mono{font-family:'JetBrains Mono',monospace;color:var(--ink-soft)}
   .dg-table td.dg-num{text-align:right;font-family:'JetBrains Mono',monospace}
   .dg-table td.dg-muted{color:#bbb}
+  /* Stacked title cell: name + position + phone all in the title column */
+  .dg-title-stack{display:flex;flex-direction:column;gap:3px;line-height:1.35;min-width:180px}
+  .dg-title-stack .dg-title-name{
+    font-family:'Fraunces',serif;font-size:15px;font-weight:500;color:var(--ink);
+    letter-spacing:-.005em;
+  }
+  .dg-title-stack .dg-title-sub{
+    font-family:'IBM Plex Sans Thai',system-ui,sans-serif;
+    font-size:12px;color:var(--ink-soft);font-weight:400;letter-spacing:0;
+  }
+  .dg-title-stack .dg-title-phone{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;color:var(--muted);font-weight:400;
+  }
   .dg-tag{
     display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;
     font-weight:500;background:var(--accent-soft);color:var(--accent);
@@ -1023,8 +1037,11 @@ function gridCard(title, sub){
     return `<div class="card span-12">${cardHead(title, sub)}<div class="empty-small">— ไม่มีข้อมูล</div></div>`;
   }
   const skip = new Set(['created_by','last_edited_by','formula','rollup','relation','files','people']);
+  // Position + phone are already shown stacked under the name in the title
+  // column, so hide their own columns here in the data grid.
+  const hideInGrid = (name) => /^ตำแหน่ง$|^position$|เบอร์โทร|phone/i.test(name);
   const cols = Object.entries(schema.properties)
-    .filter(([,s]) => !skip.has(s.type))
+    .filter(([name, s]) => !skip.has(s.type) && !hideInGrid(name))
     .map(([name,s]) => ({name, type: s.type}));
   // title column first
   cols.sort((a,b) => (a.type==='title'?-1:0) - (b.type==='title'?-1:0));
@@ -1060,7 +1077,11 @@ function gridCard(title, sub){
   }).join('');
 
   const tbody = rows.length ? rows.map(page => `
-    <tr>${cols.map(c => renderCell(page.properties[c.name], c.type)).join('')}</tr>
+    <tr>${cols.map(c =>
+      c.type === 'title'
+        ? renderTitleStackCell(page)
+        : renderCell(page.properties[c.name], c.type)
+    ).join('')}</tr>
   `).join('') : `<tr><td class="dg-table-empty" colspan="${cols.length}">ไม่พบข้อมูลที่ค้นหา</td></tr>`;
 
   return `
@@ -1113,6 +1134,32 @@ function updateGridOnly(){
   if (!target) { render(); return; }
   target.outerHTML = gridCard('Data Grid', 'ตารางข้อมูลทั้งหมด · คลิกหัวคอลัมน์เพื่อเรียงลำดับ');
   bindGridEvents();
+}
+
+// Title cell that stacks name + position + phone (used in Data Grid card).
+function renderTitleStackCell(page){
+  const props = page.properties || {};
+  const titleEntry = Object.entries(props).find(([,p]) => p.type === 'title');
+  const title = titleEntry
+    ? titleEntry[1].title.map(x=>x.plain_text).join('').trim()
+    : '';
+  const posEntry = Object.entries(props).find(([k, p]) =>
+    p.type === 'rich_text' && /ตำแหน่ง|position/i.test(k)
+  );
+  const position = posEntry
+    ? posEntry[1].rich_text.map(t=>t.plain_text).join('').trim()
+    : '';
+  const phoneEntry = Object.entries(props).find(([, p]) => p.type === 'phone_number');
+  const phone = phoneEntry ? (phoneEntry[1].phone_number || '') : '';
+
+  if (!title && !position && !phone){
+    return '<td class="dg-muted dg-title">—</td>';
+  }
+  const parts = [];
+  if (title)    parts.push(`<div class="dg-title-name">${escapeHtml(title)}</div>`);
+  if (position) parts.push(`<div class="dg-title-sub">${escapeHtml(position)}</div>`);
+  if (phone)    parts.push(`<div class="dg-title-phone">${escapeHtml(phone)}</div>`);
+  return `<td class="dg-title"><div class="dg-title-stack">${parts.join('')}</div></td>`;
 }
 
 function renderCell(prop, type){
