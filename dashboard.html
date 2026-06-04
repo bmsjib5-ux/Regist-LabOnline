@@ -212,6 +212,8 @@
   .kpi.teal .kpi-dot{background:#0f766e}
   .kpi.orange .kpi-num{color:#c2601f}
   .kpi.orange .kpi-dot{background:#c2601f}
+  .kpi.purple .kpi-num{color:#5c3fa0}
+  .kpi.purple .kpi-dot{background:#5c3fa0}
 
   /* —— Card header (for chart cards) —— */
   .card-head{
@@ -715,14 +717,39 @@ function render(){
     ? countBy(view, p => getText(p.properties[recommenderName])).slice(0,8)
     : [];
 
-  // PCU total: SUM of "จำนวนPCU" number field across all records
-  const pcuFieldName = propNameLike('จำนวนpcu','จำนวน pcu','pcu count','pcu');
-  let pcuSum = 0;
-  let pcuRecords = 0;
-  if (pcuFieldName){
+  // Two PCU KPIs: total registered PCU vs already-installed PCU. Both are
+  // discovered automatically by inspecting number fields matching /pcu/i.
+  const pcuCandidates = Object.entries(schema.properties || {})
+    .filter(([k, s]) => s.type === 'number' && /pcu/i.test(k));
+  const pcuFieldName     = (pcuCandidates.find(([k]) => !/ติดตั้ง|installed/i.test(k)) || pcuCandidates[0])?.[0];
+  const pcuInstalledName =  pcuCandidates.find(([k]) =>  /ติดตั้ง|installed/i.test(k))?.[0];
+  const sumNumberField = (fieldName) => {
+    let sum = 0, recs = 0;
+    if (!fieldName) return { sum, recs };
     view.forEach(p => {
-      const v = p.properties[pcuFieldName]?.number;
-      if (typeof v === 'number'){ pcuSum += v; pcuRecords++; }
+      const v = p.properties[fieldName]?.number;
+      if (typeof v === 'number'){ sum += v; recs++; }
+    });
+    return { sum, recs };
+  };
+  const pcuTotal     = sumNumberField(pcuFieldName);
+  const pcuInstalled = sumNumberField(pcuInstalledName);
+  const pcuSum     = pcuTotal.sum;
+  const pcuRecords = pcuTotal.recs;
+
+  // Hub count: number of records whose "แม่ข่าย/ลูกข่าย" select == "แม่ข่าย".
+  // Discovery is by-name so renaming options in Notion still works.
+  const hubEntry = Object.entries(schema.properties || {}).find(([k, s]) =>
+    s.type === 'select' && /แม่ข่าย|hub|parent/i.test(k)
+  );
+  let hubCount = 0, nodeCount = 0;
+  if (hubEntry){
+    const [hubField] = hubEntry;
+    view.forEach(p => {
+      const v = p.properties[hubField]?.select?.name;
+      if (!v) return;
+      if (/แม่ข่าย|parent|hub/i.test(v)) hubCount++;
+      else if (/ลูกข่าย|child|node/i.test(v)) nodeCount++;
     });
   }
 
@@ -756,8 +783,16 @@ function render(){
     ${kpiCard('Installed', installed, 'ติดตั้งสำเร็จ', 'teal', 'span-2')}
     ${kpiCard('Rejected', rejected, 'ไม่อนุมัติ', 'red', 'span-2')}
 
-    ${kpiCard('PCU', pcuSum, `หน่วยปฐมภูมิ · รวมจาก ${pcuRecords} records`, 'blue', 'span-3')}
-    ${systemBarCard('System Usage', `ระบบที่ใช้ · ${systemName || 'ใช้ระบบ'}`, systemBreakdown, total)}
+    ${kpiCard('Hub', hubCount,
+        hubEntry ? `จำนวนแม่ข่าย · ลูกข่าย: ${nodeCount}` : 'จำนวนแม่ข่าย',
+        'purple', 'span-2')}
+    ${kpiCard('PCU · Total', pcuSum,
+        pcuFieldName ? `หน่วยปฐมภูมิทั้งหมด · จาก ${pcuRecords} records` : 'หน่วยปฐมภูมิทั้งหมด',
+        'blue', 'span-2')}
+    ${kpiCard('PCU · Installed', pcuInstalled.sum,
+        pcuInstalledName ? `ติดตั้งแล้ว · จาก ${pcuInstalled.recs} records` : 'ที่ติดตั้งแล้ว',
+        'teal', 'span-2')}
+    ${systemBarCard('System Usage', `ระบบที่ใช้ · ${systemName || 'ใช้ระบบ'}`, systemBreakdown, total, 'span-6')}
 
     ${donutCard('Status', 'การกระจายตามสถานะ', statusBreakdown, total)}
     ${barCard('Top Hospitals', 'โรงพยาบาล/สถานพยาบาล (Top 5)', hospitalCounts, total)}

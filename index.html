@@ -128,7 +128,13 @@
   }
   .overview-link:hover{color:var(--accent)}
   .kpi-grid{
-    display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:14px;
+    display:grid;gap:14px;
+    grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));
+  }
+  .kpi-grid-status{margin-bottom:14px}
+  .kpi-grid-pcu{
+    grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+    max-width:1140px;  /* 3-card row */
   }
   .kpi-card{
     background:var(--bg-card);border:1px solid var(--line);border-radius:16px;
@@ -157,6 +163,7 @@
   .kpi-card.blue .kpi-num{color:#2c5aa0} .kpi-card.blue .kpi-dot{background:#2c5aa0}
   .kpi-card.teal .kpi-num{color:#0f766e} .kpi-card.teal .kpi-dot{background:#0f766e}
   .kpi-card.orange .kpi-num{color:#c2601f} .kpi-card.orange .kpi-dot{background:#c2601f}
+  .kpi-card.purple .kpi-num{color:#5c3fa0} .kpi-card.purple .kpi-dot{background:#5c3fa0}
 
   /* —— Breakdown grid (Status + System donuts side by side) —— */
   .breakdown-grid{
@@ -638,7 +645,8 @@
     </div>
     <a href="/dashboard.html" class="overview-link">View detailed insight →</a>
   </div>
-  <div class="kpi-grid">
+  <!-- Row 1: status KPIs -->
+  <div class="kpi-grid kpi-grid-status">
     <div class="kpi-card accent">
       <div class="kpi-label"><span class="kpi-dot"></span>Total</div>
       <div class="kpi-num" id="kpiTotal">—</div>
@@ -669,10 +677,23 @@
       <div class="kpi-num" id="kpiRejected">—</div>
       <div class="kpi-sub">ไม่อนุมัติ</div>
     </div>
+  </div>
+  <!-- Row 2: Hub count + PCU totals -->
+  <div class="kpi-grid kpi-grid-pcu">
+    <div class="kpi-card purple">
+      <div class="kpi-label"><span class="kpi-dot"></span>Hub</div>
+      <div class="kpi-num" id="kpiHub">—</div>
+      <div class="kpi-sub" id="kpiHubSub">จำนวนแม่ข่าย</div>
+    </div>
     <div class="kpi-card blue">
-      <div class="kpi-label"><span class="kpi-dot"></span>PCU</div>
+      <div class="kpi-label"><span class="kpi-dot"></span>PCU · Total</div>
       <div class="kpi-num" id="kpiPCU">—</div>
-      <div class="kpi-sub" id="kpiPCUSub">หน่วยปฐมภูมิ</div>
+      <div class="kpi-sub" id="kpiPCUSub">หน่วยปฐมภูมิทั้งหมด</div>
+    </div>
+    <div class="kpi-card teal">
+      <div class="kpi-label"><span class="kpi-dot"></span>PCU · Installed</div>
+      <div class="kpi-num" id="kpiPCUInstalled">—</div>
+      <div class="kpi-sub" id="kpiPCUInstalledSub">ที่ติดตั้งแล้ว</div>
     </div>
   </div>
 
@@ -1014,20 +1035,53 @@ function renderOverview(){
   document.getElementById('kpiInstalled').textContent  = installed;
   document.getElementById('kpiRejected').textContent   = rejected;
 
-  // PCU: sum of จำนวนPCU number field across all records
-  const pcuField = Object.keys(dbSchema.properties || {}).find(k =>
-    /จำนวนpcu|pcu/i.test(k) && dbSchema.properties[k].type === 'number'
-  );
-  let pcuSum = 0, pcuRecords = 0;
-  if (pcuField){
+  // PCU KPIs: sum two number fields separately:
+  //   "จำนวนPCU"          → total registered PCU (= PCU · Total)
+  //   "จำนวนติดตั้งPCU"  → already installed PCU (= PCU · Installed)
+  // Auto-discover by name: anything matching /pcu/i with type === number.
+  const pcuCandidates = Object.entries(dbSchema.properties || {})
+    .filter(([k, s]) => s.type === 'number' && /pcu/i.test(k));
+  const pcuTotalField     = (pcuCandidates.find(([k]) => !/ติดตั้ง|installed/i.test(k)) || pcuCandidates[0])?.[0];
+  const pcuInstalledField =  pcuCandidates.find(([k]) =>  /ติดตั้ง|installed/i.test(k))?.[0];
+
+  const sumNumberField = (fieldName) => {
+    let sum = 0, recs = 0;
+    if (!fieldName) return { sum, recs };
     pages.forEach(p => {
-      const v = p.properties[pcuField]?.number;
-      if (typeof v === 'number'){ pcuSum += v; pcuRecords++; }
+      const v = p.properties[fieldName]?.number;
+      if (typeof v === 'number'){ sum += v; recs++; }
+    });
+    return { sum, recs };
+  };
+
+  const pcuTotal     = sumNumberField(pcuTotalField);
+  const pcuInstalled = sumNumberField(pcuInstalledField);
+
+  document.getElementById('kpiPCU').textContent = pcuTotal.sum;
+  document.getElementById('kpiPCUSub').textContent =
+    pcuTotalField ? `หน่วยปฐมภูมิ · รวมจาก ${pcuTotal.recs} records` : 'หน่วยปฐมภูมิ';
+  document.getElementById('kpiPCUInstalled').textContent = pcuInstalled.sum;
+  document.getElementById('kpiPCUInstalledSub').textContent =
+    pcuInstalledField ? `ติดตั้งแล้ว · จาก ${pcuInstalled.recs} records` : 'ที่ติดตั้งแล้ว';
+
+  // Hub count: records whose "แม่ข่าย/ลูกข่าย" select == "แม่ข่าย".
+  // Discovery is by-name so renaming options in Notion still works.
+  const hubEntry = Object.entries(dbSchema.properties || {}).find(([k, s]) =>
+    s.type === 'select' && /แม่ข่าย|hub|parent/i.test(k)
+  );
+  let hubCount = 0, nodeCount = 0;
+  if (hubEntry){
+    const [hubField] = hubEntry;
+    pages.forEach(p => {
+      const v = p.properties[hubField]?.select?.name;
+      if (!v) return;
+      if (/แม่ข่าย|parent|hub/i.test(v)) hubCount++;
+      else if (/ลูกข่าย|child|node/i.test(v)) nodeCount++;
     });
   }
-  document.getElementById('kpiPCU').textContent = pcuSum;
-  document.getElementById('kpiPCUSub').textContent =
-    pcuField ? `หน่วยปฐมภูมิ · รวมจาก ${pcuRecords} records` : 'หน่วยปฐมภูมิ';
+  document.getElementById('kpiHub').textContent = hubCount;
+  document.getElementById('kpiHubSub').textContent =
+    hubEntry ? `จำนวนแม่ข่าย · ลูกข่าย: ${nodeCount}` : 'จำนวนแม่ข่าย';
 
   renderStatusBreakdown();
   renderSystemBreakdown();
