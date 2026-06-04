@@ -132,6 +132,29 @@
   }
   .hero h2 em{font-style:italic;color:var(--accent);font-weight:300}
   .hero p{color:var(--ink-soft);font-size:15px;line-height:1.6;max-width:640px}
+  .hero-filters{
+    margin-top:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  }
+  .hero-filter-label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;
+    text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
+  }
+  .hero-filter{
+    padding:10px 32px 10px 14px;border:1px solid var(--line);border-radius:10px;
+    background:#fff;font-family:inherit;font-size:13px;color:var(--ink);
+    cursor:pointer;transition:border-color .15s;min-width:200px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8580' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;
+    appearance:none;-webkit-appearance:none;
+  }
+  .hero-filter:focus{outline:none;border-color:var(--accent)}
+  .hero-filter.active{
+    border-color:var(--accent);background-color:var(--accent-soft);
+    color:var(--accent);font-weight:500;
+  }
+  .hero-filter-hint{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+  }
 
   /* —— Layout grid —— */
   .grid{
@@ -170,6 +193,7 @@
     font-family:'Fraunces',serif;font-weight:500;font-size:48px;
     line-height:1;margin-top:14px;letter-spacing:-.02em;
   }
+  .kpi.span-2 .kpi-num{font-size:38px}
   .kpi .kpi-sub{
     font-size:12px;color:var(--muted);margin-top:8px;
     font-family:'JetBrains Mono',monospace;
@@ -184,6 +208,10 @@
   .kpi.red .kpi-dot{background:var(--red)}
   .kpi.blue .kpi-num{color:var(--blue)}
   .kpi.blue .kpi-dot{background:var(--blue)}
+  .kpi.teal .kpi-num{color:#0f766e}
+  .kpi.teal .kpi-dot{background:#0f766e}
+  .kpi.orange .kpi-num{color:#c2601f}
+  .kpi.orange .kpi-dot{background:#c2601f}
 
   /* —— Card header (for chart cards) —— */
   .card-head{
@@ -417,6 +445,13 @@
   </div>
   <h2>Insight <em>at a glance.</em></h2>
   <p>สรุปภาพรวมการลงทะเบียน แสดงสถานะการอนุมัติ โรงพยาบาลที่ลงทะเบียนมากที่สุด การกระจายตามตำแหน่ง และแนวโน้มการลงทะเบียน เพื่อช่วยคุณตัดสินใจได้เร็วขึ้น</p>
+  <div class="hero-filters">
+    <label class="hero-filter-label" for="statusFilter">กรองสถานะ</label>
+    <select class="hero-filter" id="statusFilter" aria-label="Filter by สถานะ">
+      <option value="">ทุกสถานะ</option>
+    </select>
+    <span class="hero-filter-hint" id="statusFilterHint"></span>
+  </div>
 </section>
 
 <main class="grid" id="root">
@@ -435,6 +470,8 @@ let autoTimer = null;
 let autoEnabled = true;
 let gridSort = { col: null, dir: 'desc' };  // col = property name, dir = 'asc' | 'desc'
 let gridSearch = '';
+let statusFilter = '';  // '' = ทุกสถานะ, else = status option name
+let pageView = [];       // filtered slice of `pages` consumed by render() & gridCard()
 
 // ————— Palette for chart colors —————
 const COLOR_BY_NOTION = {
@@ -445,6 +482,11 @@ const COLOR_BY_NOTION = {
 
 document.getElementById('refreshBtn').onclick = () => loadData(false);
 document.getElementById('autoBtn').onclick = toggleAuto;
+document.getElementById('statusFilter').onchange = (e) => {
+  statusFilter = e.target.value;
+  e.target.classList.toggle('active', !!statusFilter);
+  render();
+};
 document.addEventListener('visibilitychange', () => {
   if (!autoEnabled) return;
   if (document.hidden) stopAutoTimer();
@@ -561,6 +603,28 @@ function propNameLike(...patterns){
   return null;
 }
 
+// ————— Status filter (populated from schema) —————
+function populateStatusFilter(statusName){
+  const sel = document.getElementById('statusFilter');
+  if (!sel || !schema) return;
+  if (!statusName || schema.properties[statusName]?.type !== 'status'){
+    sel.style.display = 'none';
+    return;
+  }
+  sel.style.display = '';
+  const options = schema.properties[statusName].status.options || [];
+  // Only repopulate if the option list changed (avoid losing user selection on every render)
+  const want = '|' + options.map(o => o.name).join('|') + '|';
+  if (sel.dataset.optList === want) return;
+  sel.dataset.optList = want;
+  const prev = statusFilter;
+  sel.innerHTML = '<option value="">ทุกสถานะ</option>' +
+    options.map(o => `<option value="${o.name.replace(/"/g,'&quot;')}">${o.name}</option>`).join('');
+  if (prev && options.some(o => o.name === prev)) sel.value = prev;
+  else { sel.value = ''; statusFilter = ''; }
+  sel.classList.toggle('active', !!statusFilter);
+}
+
 // ————— Render —————
 function render(){
   const statusName = propNameByType('status') || propNameLike('สถานะ','status');
@@ -571,47 +635,84 @@ function render(){
   const phoneName = propNameByType('phone_number');
   const createdName = propNameByType('created_time') || propNameLike('วันที่','date');
 
+  // (Re)populate the status filter dropdown from schema, then narrow the page
+  // list to the selected status. All calculations below run on `view` so the
+  // whole dashboard becomes a drilldown into one status when filtered.
+  populateStatusFilter(statusName);
+  const allCount = pages.length;
+  const view = (statusFilter && statusName)
+    ? pages.filter(p => p.properties[statusName]?.status?.name === statusFilter)
+    : pages;
+  pageView = view;  // expose to gridCard / completeness / etc.
+  const hint = document.getElementById('statusFilterHint');
+  if (hint){
+    hint.textContent = statusFilter
+      ? `· แสดง ${view.length} จาก ${allCount} records`
+      : `· รวม ${allCount} records`;
+  }
+
   // Status breakdown (using schema options for consistent color/order)
   let statusBreakdown = [];
-  let total = pages.length;
+  let total = view.length;
   if (statusName && schema.properties[statusName].type === 'status'){
     const opts = schema.properties[statusName].status.options;
     const byName = {};
     opts.forEach(o => byName[o.name] = {name:o.name, color:o.color, count:0});
-    pages.forEach(p => {
+    view.forEach(p => {
       const v = p.properties[statusName]?.status?.name;
       if (v && byName[v]) byName[v].count++;
     });
     statusBreakdown = Object.values(byName);
   }
 
-  // Group counts by COLOR (not name) so renamed options still map to right KPI
-  const byColor = { yellow:0, green:0, red:0, blue:0 };
-  statusBreakdown.forEach(s => {
-    if (byColor[s.color] !== undefined) byColor[s.color] += s.count;
-  });
-  const approved = byColor.green;
-  const pending  = byColor.yellow;
-  const rejected = byColor.red;
+  // Status KPIs are matched primarily by NAME (Thai or English keyword), with
+  // color as a fallback. ติดตั้ง_* takes precedence so a row in "ติดตั้งสำเร็จ"
+  // is not also counted as "Approved".
+  let pending = 0, approved = 0, rejected = 0, installed = 0, installing = 0;
+  if (statusName){
+    const colorByName = {};
+    (schema.properties[statusName].status.options || [])
+      .forEach(opt => { colorByName[opt.name] = opt.color; });
+    const reInstalled  = /ติดตั้งสำเร็จ|installed|install\s*success/i;
+    const reInstalling = /กำลังติดตั้ง|installing|in\s*progress/i;
+    const rePending    = /รอดำเนินการ|pending/i;
+    const reApproved   = /อนุมัติแล้ว|approved/i;
+    const reRejected   = /reject|ไม่อนุมัติ/i;
+    view.forEach(p => {
+      const v = p.properties[statusName]?.status?.name;
+      if (!v) return;
+      if      (reInstalled.test(v))  installed++;
+      else if (reInstalling.test(v)) installing++;
+      else if (reApproved.test(v))   approved++;
+      else if (rePending.test(v))    pending++;
+      else if (reRejected.test(v))   rejected++;
+      else {
+        const c = colorByName[v];
+        if (c === 'yellow') pending++;
+        else if (c === 'green') approved++;
+        else if (c === 'red') rejected++;
+      }
+    });
+  }
 
   // Hospital counts
   const hospitalCounts = hospitalName
-    ? countBy(pages, p => getText(p.properties[hospitalName])).slice(0,5)
+    ? countBy(view, p => getText(p.properties[hospitalName])).slice(0,5)
     : [];
 
   // Position counts
   const positionCounts = positionName
-    ? countBy(pages, p => getText(p.properties[positionName])).slice(0,6)
+    ? countBy(view, p => getText(p.properties[positionName])).slice(0,6)
     : [];
 
   // Operator ranking (who processed the case — ผู้ดำเนินการ)
   const operatorCounts = operatorName
-    ? countBy(pages, p => getText(p.properties[operatorName])).slice(0,5)
+    ? countBy(view, p => getText(p.properties[operatorName])).slice(0,5)
     : [];
 
   // Recommender ranking (who referred — ผู้แนะนำ)
   const recommenderCounts = recommenderName
-    ? countBy(pages, p => getText(p.properties[recommenderName])).slice(0,8)
+    ? countBy(view, p => getText(p.properties[recommenderName])).slice(0,8)
     : [];
 
   // PCU total: SUM of "จำนวนPCU" number field across all records
@@ -619,7 +720,7 @@ function render(){
   let pcuSum = 0;
   let pcuRecords = 0;
   if (pcuFieldName){
-    pages.forEach(p => {
+    view.forEach(p => {
       const v = p.properties[pcuFieldName]?.number;
       if (typeof v === 'number'){ pcuSum += v; pcuRecords++; }
     });
@@ -632,7 +733,7 @@ function render(){
     const opts = schema.properties[systemName].select.options;
     const byName = {};
     opts.forEach(o => byName[o.name] = { name:o.name, color:o.color, count:0 });
-    pages.forEach(p => {
+    view.forEach(p => {
       const v = p.properties[systemName]?.select?.name;
       if (v && byName[v]) byName[v].count++;
     });
@@ -640,18 +741,20 @@ function render(){
   }
 
   // Timeline (last 30 days)
-  const timeline = buildTimeline(pages, createdName, 30);
+  const timeline = buildTimeline(view, createdName, 30);
 
   // Completeness
-  const completeness = buildCompleteness();
+  const completeness = buildCompleteness(view);
 
   // ————— Build markup —————
   const root = document.getElementById('root');
   root.innerHTML = `
-    ${kpiCard('Total', total, 'ทั้งหมด', 'accent')}
-    ${kpiCard('Pending', pending, 'รอดำเนินการ', 'yellow')}
-    ${kpiCard('Approved', approved, 'อนุมัติแล้ว', 'green')}
-    ${kpiCard('Rejected', rejected, 'ไม่อนุมัติ', 'red')}
+    ${kpiCard('Total', total, 'ทั้งหมด', 'accent', 'span-2')}
+    ${kpiCard('Pending', pending, 'รอดำเนินการ', 'yellow', 'span-2')}
+    ${kpiCard('Approved', approved, 'อนุมัติแล้ว', 'green', 'span-2')}
+    ${kpiCard('Installing', installing, 'กำลังติดตั้ง', 'orange', 'span-2')}
+    ${kpiCard('Installed', installed, 'ติดตั้งสำเร็จ', 'teal', 'span-2')}
+    ${kpiCard('Rejected', rejected, 'ไม่อนุมัติ', 'red', 'span-2')}
 
     ${kpiCard('PCU', pcuSum, `หน่วยปฐมภูมิ · รวมจาก ${pcuRecords} records`, 'blue', 'span-3')}
     ${systemBarCard('System Usage', `ระบบที่ใช้ · ${systemName || 'ใช้ระบบ'}`, systemBreakdown, total)}
@@ -877,7 +980,11 @@ function completenessCard(title, sub, stats){
 }
 
 function gridCard(title, sub){
-  if (!schema || !pages.length){
+  // gridCard uses `pageView` (the status-filtered slice) so it stays in sync
+  // with the rest of the dashboard when a status filter is active. Falls back
+  // to `pages` if the view hasn't been computed yet (e.g., very first render).
+  const source = (pageView && pageView.length) || statusFilter ? pageView : pages;
+  if (!schema || !source.length){
     return `<div class="card span-12">${cardHead(title, sub)}<div class="empty-small">— ไม่มีข้อมูล</div></div>`;
   }
   const skip = new Set(['created_by','last_edited_by','formula','rollup','relation','files','people']);
@@ -895,7 +1002,7 @@ function gridCard(title, sub){
   }
 
   const q = gridSearch.trim().toLowerCase();
-  let rows = pages;
+  let rows = source;
   if (q){
     rows = rows.filter(p => JSON.stringify(p.properties).toLowerCase().includes(q));
   }
@@ -925,7 +1032,7 @@ function gridCard(title, sub){
     <div class="card span-12">
       ${cardHead(title, sub)}
       <div class="dg-meta">
-        <span>Showing <strong style="color:var(--ink)">${rows.length}</strong> of ${pages.length} records</span>
+        <span>Showing <strong style="color:var(--ink)">${rows.length}</strong> of ${source.length} records</span>
         <input type="text" id="gridSearch" class="dg-search" placeholder="🔍 ค้นหาในตาราง…" value="${escapeHtml(gridSearch)}" />
       </div>
       <div class="dg-wrap">
@@ -1082,7 +1189,7 @@ function formatDayLabel(d){
   return d.toLocaleDateString('th-TH', {day:'2-digit', month:'short'});
 }
 
-function buildCompleteness(){
+function buildCompleteness(pages){
   if (!schema) return [];
   const props = Object.entries(schema.properties);
   const total = pages.length;

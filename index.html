@@ -128,7 +128,7 @@
   }
   .overview-link:hover{color:var(--accent)}
   .kpi-grid{
-    display:grid;grid-template-columns:repeat(5, 1fr);gap:16px;
+    display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:14px;
   }
   .kpi-card{
     background:var(--bg-card);border:1px solid var(--line);border-radius:16px;
@@ -155,6 +155,8 @@
   .kpi-card.yellow .kpi-num{color:#b88918} .kpi-card.yellow .kpi-dot{background:#b88918}
   .kpi-card.red .kpi-num{color:#a83028} .kpi-card.red .kpi-dot{background:#a83028}
   .kpi-card.blue .kpi-num{color:#2c5aa0} .kpi-card.blue .kpi-dot{background:#2c5aa0}
+  .kpi-card.teal .kpi-num{color:#0f766e} .kpi-card.teal .kpi-dot{background:#0f766e}
+  .kpi-card.orange .kpi-num{color:#c2601f} .kpi-card.orange .kpi-dot{background:#c2601f}
 
   /* —— Breakdown grid (Status + System donuts side by side) —— */
   .breakdown-grid{
@@ -210,13 +212,36 @@
     .status-legend{grid-template-columns:1fr 1fr}
   }
 
-  /* —— Toolbar —— */
+  /* —— Toolbar (2 rows: search/view + grouped controls) —— */
   .toolbar{
     max-width:1400px;margin:0 auto;padding:16px 32px 32px;
-    display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+    display:flex;flex-direction:column;gap:12px;
   }
+  .toolbar-row{
+    display:flex;justify-content:space-between;align-items:center;
+    gap:14px;flex-wrap:wrap;
+  }
+  .toolbar-row-secondary{
+    padding:12px 16px;background:#fff;border:1px solid var(--line);
+    border-radius:14px;box-shadow:var(--shadow-sm);
+  }
+  .toolbar-group{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  .toolbar-group-label{
+    font-family:'JetBrains Mono',monospace;font-size:10px;
+    text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
+    padding-right:4px;
+  }
+  .toolbar-clear{
+    border:1px solid transparent;background:transparent;color:var(--muted);
+    font-family:inherit;font-size:12px;cursor:pointer;
+    padding:6px 10px;border-radius:8px;
+    display:inline-flex;align-items:center;gap:5px;transition:all .15s;
+  }
+  .toolbar-clear:hover{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-soft)}
   .search-box{
-    flex:1;max-width:400px;position:relative;
+    flex:1;max-width:520px;position:relative;
   }
   .search-box input{
     width:100%;padding:12px 16px 12px 44px;border:1px solid var(--line);
@@ -458,7 +483,7 @@
     word-break:break-all;
   }
 
-  /* —— Modal —— */
+  /* —— Modal (centered popup, used by Import preview) —— */
   .modal-backdrop{
     position:fixed;inset:0;background:rgba(20,18,14,.5);backdrop-filter:blur(4px);
     display:none;align-items:flex-start;justify-content:center;padding:60px 20px;
@@ -503,6 +528,37 @@
     color:#a83028;border-color:#f4c9c2;margin-right:auto;
   }
   .delete-btn:hover{background:#fdf5f3;border-color:#a83028}
+
+  /* —— Drawer variant (right-side slide-in panel for Edit/New Entry) —— */
+  /* When backdrop contains a .modal-drawer, we drop the centered-flex layout
+     so the panel can anchor to the right edge of the viewport. */
+  .modal-backdrop.show:has(.modal-drawer){
+    display:block;padding:0;
+  }
+  .modal.modal-drawer{
+    position:fixed;top:0;right:0;bottom:0;left:auto;
+    margin:0;padding:0;
+    width:520px;max-width:92vw;height:100vh;
+    border-radius:0;
+    box-shadow:-12px 0 32px rgba(0,0,0,.18);
+    display:flex;flex-direction:column;
+    animation:slideInRight .3s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes slideInRight{
+    from{transform:translateX(100%);opacity:.4}
+    to{transform:translateX(0);opacity:1}
+  }
+  .modal-drawer .modal-header{
+    margin:0;padding:22px 28px;background:var(--bg-card);
+    position:sticky;top:0;z-index:2;
+  }
+  .modal-drawer #entryForm{
+    flex:1;overflow-y:auto;padding:22px 28px;
+  }
+  .modal-drawer .modal-actions{
+    margin:0;padding:18px 28px;background:var(--bg-card);
+    position:sticky;bottom:0;z-index:2;box-shadow:0 -1px 0 var(--line);
+  }
 
   /* —— Toast —— */
   .toast{
@@ -598,6 +654,16 @@
       <div class="kpi-num" id="kpiApproved">—</div>
       <div class="kpi-sub">อนุมัติแล้ว</div>
     </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label"><span class="kpi-dot"></span>Installing</div>
+      <div class="kpi-num" id="kpiInstalling">—</div>
+      <div class="kpi-sub">กำลังติดตั้ง</div>
+    </div>
+    <div class="kpi-card teal">
+      <div class="kpi-label"><span class="kpi-dot"></span>Installed</div>
+      <div class="kpi-num" id="kpiInstalled">—</div>
+      <div class="kpi-sub">ติดตั้งสำเร็จ</div>
+    </div>
     <div class="kpi-card red">
       <div class="kpi-label"><span class="kpi-dot"></span>Rejected</div>
       <div class="kpi-num" id="kpiRejected">—</div>
@@ -631,39 +697,58 @@
 </section>
 
 <div class="toolbar">
-  <div class="search-box">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-    <input type="text" id="searchInput" placeholder="Search…" />
+  <!-- Row 1: search (wide) + view mode toggle -->
+  <div class="toolbar-row">
+    <div class="search-box">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="ค้นหาในทุก field…" />
+    </div>
+    <div class="view-toggle" role="tablist" aria-label="View mode">
+      <button type="button" id="viewCardsBtn" class="active" aria-pressed="true">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Cards
+      </button>
+      <button type="button" id="viewGridBtn" aria-pressed="false">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        Grid
+      </button>
+    </div>
   </div>
-  <select class="filter-select" id="systemFilter" aria-label="Filter by ใช้ระบบ">
-    <option value="">ทุกระบบ</option>
-  </select>
-  <div class="view-toggle" role="tablist" aria-label="View mode">
-    <button type="button" id="viewCardsBtn" class="active" aria-pressed="true">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      Cards
-    </button>
-    <button type="button" id="viewGridBtn" aria-pressed="false">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      Grid
-    </button>
+  <!-- Row 2: grouped controls (filters on left · data ops on right) -->
+  <div class="toolbar-row toolbar-row-secondary">
+    <div class="toolbar-group">
+      <span class="toolbar-group-label">กรอง</span>
+      <select class="filter-select" id="systemFilter" aria-label="Filter by ใช้ระบบ">
+        <option value="">ทุกระบบ</option>
+      </select>
+      <select class="filter-select" id="statusFilter" aria-label="Filter by สถานะ">
+        <option value="">ทุกสถานะ</option>
+      </select>
+      <button type="button" class="toolbar-clear" id="clearFilterBtn" title="ล้าง filter ทั้งหมด" style="display:none">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        ล้าง
+      </button>
+    </div>
+    <div class="toolbar-group">
+      <span class="toolbar-group-label">ข้อมูล</span>
+      <a href="/sample.csv" download="sample.csv" class="tool-btn" id="sampleBtn" title="Download sample CSV template">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+        Sample
+      </a>
+      <button type="button" class="tool-btn" id="importBtn" title="Import rows from CSV">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import
+      </button>
+      <button type="button" class="tool-btn" id="exportBtn" title="Export visible rows to CSV (plain text, opens in Excel)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        CSV
+      </button>
+      <button type="button" class="tool-btn tool-btn-excel" id="exportExcelBtn" title="Export visible rows as .xlsx (Excel native format)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="10" y1="9" x2="14" y2="9"/></svg>
+        Excel
+      </button>
+    </div>
   </div>
-  <a href="/sample.csv" download="sample.csv" class="tool-btn" id="sampleBtn" title="Download sample CSV template">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
-    Sample
-  </a>
-  <button type="button" class="tool-btn" id="importBtn" title="Import rows from CSV">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    Import
-  </button>
-  <button type="button" class="tool-btn" id="exportBtn" title="Export visible rows to CSV (plain text, opens in Excel)">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-    CSV
-  </button>
-  <button type="button" class="tool-btn tool-btn-excel" id="exportExcelBtn" title="Export visible rows as .xlsx (Excel native format)">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="10" y1="9" x2="14" y2="9"/></svg>
-    Excel
-  </button>
   <input type="file" id="importFile" accept=".csv,text/csv" style="display:none">
 </div>
 
@@ -674,12 +759,12 @@
   </div>
 </main>
 
-<!-- Edit/Create Modal -->
+<!-- Edit/Create Drawer (right-side slide-in) -->
 <div class="modal-backdrop" id="modal">
-  <div class="modal">
+  <div class="modal modal-drawer">
     <div class="modal-header">
       <h3 id="modalTitle">New Entry</h3>
-      <button class="close-btn" onclick="closeModal()">×</button>
+      <button class="close-btn" onclick="closeModal()" aria-label="Close">×</button>
     </div>
     <form id="entryForm"></form>
     <div class="modal-actions">
@@ -720,6 +805,8 @@ let viewMode = localStorage.getItem('viewMode') || 'cards';  // 'cards' | 'grid'
 let gridSort = { col: null, dir: 'desc' };
 let systemFilter = '';  // '' = ทุกระบบ, else = option name from schema
 let systemPropName = null;  // resolved property name for ใช้ระบบ
+let statusFilter = '';  // '' = ทุกสถานะ, else = status option name
+let statusPropName = null;  // resolved property name for สถานะ
 
 // ————— Init —————
 window.addEventListener('DOMContentLoaded', init);
@@ -742,12 +829,39 @@ document.getElementById('importModal').onclick = (e) => {
 document.getElementById('systemFilter').onchange = (e) => {
   systemFilter = e.target.value;
   e.target.classList.toggle('active', !!systemFilter);
+  updateClearFilterBtn();
   renderGallery();
 };
+document.getElementById('statusFilter').onchange = (e) => {
+  statusFilter = e.target.value;
+  e.target.classList.toggle('active', !!statusFilter);
+  updateClearFilterBtn();
+  renderGallery();
+};
+document.getElementById('clearFilterBtn').onclick = () => {
+  const sysSel = document.getElementById('systemFilter');
+  const stSel  = document.getElementById('statusFilter');
+  systemFilter = ''; statusFilter = '';
+  sysSel.value = ''; stSel.value = '';
+  sysSel.classList.remove('active'); stSel.classList.remove('active');
+  updateClearFilterBtn();
+  renderGallery();
+};
+function updateClearFilterBtn(){
+  const btn = document.getElementById('clearFilterBtn');
+  if (!btn) return;
+  btn.style.display = (systemFilter || statusFilter) ? 'inline-flex' : 'none';
+}
 document.addEventListener('visibilitychange', () => {
   if (!autoEnabled) return;
   if (document.hidden) stopAutoTimer();
   else { startAutoTimer(); loadData(true); }
+});
+// Esc closes whichever modal/drawer is open (Edit drawer takes priority)
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('modal').classList.contains('show')) closeModal();
+  else if (document.getElementById('importModal').classList.contains('show')) closeImportModal();
 });
 
 async function init(){
@@ -831,6 +945,8 @@ async function loadData(silent=false){
 
     renderOverview();
     populateSystemFilter();
+    populateStatusFilter();
+    updateClearFilterBtn();
     renderGallery();
   } catch (err) {
     if (silent){
@@ -861,22 +977,42 @@ function renderOverview(){
   const total = pages.length;
   document.getElementById('kpiTotal').textContent = total;
 
-  // Count statuses by COLOR (not by name) so renaming options doesn't break KPIs
+  // Status KPIs are matched primarily by NAME (Thai or English keyword) — color
+  // is a fallback because the user is allowed to recolor options in Notion.
+  // Each row only counts once: ติดตั้ง_* takes precedence over the more
+  // generic อนุมัติแล้ว/Reject so a row in "ติดตั้งสำเร็จ" is not double-counted.
   const statusEntry = Object.entries(dbSchema.properties || {}).find(([,s]) => s.type === 'status');
-  const byColor = { yellow:0, green:0, red:0 };
+  let pending = 0, approved = 0, rejected = 0, installed = 0, installing = 0;
   if (statusEntry){
     const [statusName, statusSchema] = statusEntry;
     const colorByName = {};
     statusSchema.status.options.forEach(opt => { colorByName[opt.name] = opt.color; });
+    const reInstalled  = /ติดตั้งสำเร็จ|installed|install\s*success/i;
+    const reInstalling = /กำลังติดตั้ง|installing|in\s*progress/i;
+    const rePending    = /รอดำเนินการ|pending/i;
+    const reApproved   = /อนุมัติแล้ว|approved/i;
+    const reRejected   = /reject|ไม่อนุมัติ/i;
     pages.forEach(p => {
       const v = p.properties[statusName]?.status?.name;
-      const c = v ? colorByName[v] : null;
-      if (c && byColor[c] !== undefined) byColor[c]++;
+      if (!v) return;
+      if      (reInstalled.test(v))  installed++;
+      else if (reInstalling.test(v)) installing++;
+      else if (reApproved.test(v))   approved++;
+      else if (rePending.test(v))    pending++;
+      else if (reRejected.test(v))   rejected++;
+      else {
+        const c = colorByName[v];
+        if (c === 'yellow') pending++;
+        else if (c === 'green') approved++;
+        else if (c === 'red') rejected++;
+      }
     });
   }
-  document.getElementById('kpiPending').textContent  = byColor.yellow;
-  document.getElementById('kpiApproved').textContent = byColor.green;
-  document.getElementById('kpiRejected').textContent = byColor.red;
+  document.getElementById('kpiPending').textContent    = pending;
+  document.getElementById('kpiApproved').textContent   = approved;
+  document.getElementById('kpiInstalling').textContent = installing;
+  document.getElementById('kpiInstalled').textContent  = installed;
+  document.getElementById('kpiRejected').textContent   = rejected;
 
   // PCU: sum of จำนวนPCU number field across all records
   const pcuField = Object.keys(dbSchema.properties || {}).find(k =>
@@ -998,6 +1134,23 @@ function populateSystemFilter(){
   sel.classList.toggle('active', !!systemFilter);
 }
 
+// ————— Status filter helpers —————
+function populateStatusFilter(){
+  const sel = document.getElementById('statusFilter');
+  if (!dbSchema || !sel) return;
+  const entry = Object.entries(dbSchema.properties).find(([,s]) => s.type === 'status');
+  if (!entry){ sel.style.display = 'none'; return; }
+  sel.style.display = '';
+  statusPropName = entry[0];
+  const options = entry[1].status.options || [];
+  const prev = statusFilter;
+  sel.innerHTML = '<option value="">ทุกสถานะ</option>' +
+    options.map(o => `<option value="${escapeHtml(o.name)}">${escapeHtml(o.name)}</option>`).join('');
+  if (prev && options.some(o => o.name === prev)) sel.value = prev;
+  else { sel.value = ''; statusFilter = ''; }
+  sel.classList.toggle('active', !!statusFilter);
+}
+
 // ————— Render —————
 function renderGallery(){
   const gallery = document.getElementById('gallery');
@@ -1007,16 +1160,19 @@ function renderGallery(){
   if (systemFilter && systemPropName){
     filtered = filtered.filter(p => p.properties[systemPropName]?.select?.name === systemFilter);
   }
+  if (statusFilter && statusPropName){
+    filtered = filtered.filter(p => p.properties[statusPropName]?.status?.name === statusFilter);
+  }
   if (q){
     filtered = filtered.filter(p => JSON.stringify(p.properties).toLowerCase().includes(q));
   }
 
   if (!filtered.length) {
-    const hasFilter = !!q || !!systemFilter;
+    const hasFilter = !!q || !!systemFilter || !!statusFilter;
     gallery.innerHTML = `<div class="status">
       <div class="empty-icon">${hasFilter ? '🔍' : '📭'}</div>
       <p>${hasFilter
-        ? `ไม่พบรายการที่ตรง${systemFilter ? ` (ระบบ: ${escapeHtml(systemFilter)})` : ''}${q ? ` (ค้นหา: ${escapeHtml(q)})` : ''}`
+        ? `ไม่พบรายการที่ตรง${systemFilter ? ` (ระบบ: ${escapeHtml(systemFilter)})` : ''}${statusFilter ? ` (สถานะ: ${escapeHtml(statusFilter)})` : ''}${q ? ` (ค้นหา: ${escapeHtml(q)})` : ''}`
         : 'No entries yet. Click "New Entry" to create one.'}</p>
     </div>`;
     return;
