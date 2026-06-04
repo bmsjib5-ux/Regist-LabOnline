@@ -94,10 +94,28 @@ People (read), Created Time (read), Last Edited Time (read)
 
 ---
 
-## 🚀 Deploy (Optional)
+## 🚀 Deploy to Render
 
-- **Vercel/Netlify**: แยก `server.js` เป็น serverless function + ตั้งค่า env vars
-- **Railway/Render**: push ทั้งโฟลเดอร์ขึ้น แล้วตั้งค่า env vars
-- **Cloudflare Workers**: แปลง `server.js` เป็น Worker script
+โปรเจกต์มี [`render.yaml`](render.yaml) ให้แล้ว — Render จะอ่านและสร้าง service อัตโนมัติ
+
+### ขั้นตอน (ครั้งเดียว)
+
+1. **Push ขึ้น GitHub** ให้เรียบร้อย (ทำแล้วถ้าตามคู่มือนี้ตั้งแต่ต้น)
+2. ไปที่ **https://dashboard.render.com** → **New +** → **Blueprint**
+3. เลือก repo `Regist-LabOnline` → Render เจอ `render.yaml` ขึ้นมาเอง
+4. ก่อน **Apply** ใส่ environment variables 2 ตัว (secret, ไม่ถูก commit):
+   - `NOTION_TOKEN` = `ntn_xxxxxxxx...`
+   - `DATABASE_ID` = `3491c083c4858041b2a4de88f339a9b0`
+5. คลิก **Apply** → Render build + deploy ให้ (~2-3 นาที)
+6. ได้ URL เช่น `https://regist-labonline.onrender.com` — แจกได้เลย
+
+### หลัง deploy
+- ทุก `git push` ที่ branch `main` → Render auto-deploy ใหม่ (`autoDeploy: true`)
+- ดู build log ได้ใน Render dashboard → service → **Logs**
+- Health check `/api/database` ต้องคืน 200 (Render ใช้ตรวจว่า deploy สำเร็จ)
+
+### Plan
+- **Free** (default): instance จะ sleep หลังนิ่ง 15 นาที, cold start ~30 วินาที
+- ถ้าต้อง always-on: เปลี่ยน `plan: free` → `plan: starter` ใน `render.yaml` ($7/เดือน)
 
 Enjoy! 🎉

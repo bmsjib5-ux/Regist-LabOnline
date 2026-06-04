@@ -22,6 +22,16 @@ const NOTION_VERSION = '2022-06-28';
 
 app.use(cors());
 app.use(express.json());
+
+// Block sensitive / non-public files from being served by express.static.
+// server.js/main.js are source; *.bat are local-dev scripts; package.json reveals
+// deps. Dotfiles (.env etc) are already ignored by default.
+const BLOCKED_RE = /^\/(?:server\.js|main\.js|start\.bat|package(?:-lock)?\.json|node_modules(?:\/|$))/i;
+app.use((req, res, next) => {
+  if (BLOCKED_RE.test(req.path)) return res.status(404).end();
+  next();
+});
+
 app.use(express.static(__dirname));
 
 if (!NOTION_TOKEN || !DATABASE_ID) {

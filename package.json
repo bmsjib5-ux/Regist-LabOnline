@@ -12,6 +12,9 @@
     "pack": "electron-builder --win --dir",
     "build": "electron-builder --win"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

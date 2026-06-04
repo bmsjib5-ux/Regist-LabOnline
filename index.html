@@ -14,6 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
   :root{
     --bg:#faf8f3;
@@ -252,6 +253,82 @@
   }
   .view-toggle button:hover{color:var(--ink)}
   .view-toggle button.active{background:#fff;color:var(--ink);box-shadow:var(--shadow-sm)}
+
+  /* —— Tool buttons (Sample/Import/Export) —— */
+  .tool-btn{
+    border:1px solid var(--line);background:#fff;color:var(--ink-soft);
+    font-family:inherit;font-size:13px;font-weight:500;
+    padding:9px 14px;border-radius:10px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:7px;
+    transition:all .15s ease;box-shadow:var(--shadow-sm);
+    text-decoration:none;
+  }
+  .tool-btn:hover{border-color:#c9c2b0;color:var(--ink);transform:translateY(-1px);box-shadow:var(--shadow-md)}
+  .tool-btn svg{flex-shrink:0}
+  .tool-btn-excel{
+    color:#1d6f42;border-color:#bcd9ba;background:#f1f8ef;
+  }
+  .tool-btn-excel:hover{
+    color:#fff;background:#1d6f42;border-color:#1d6f42;
+  }
+
+  /* —— Import preview modal —— */
+  .import-preview{
+    max-width:760px;width:96%;max-height:88vh;display:flex;flex-direction:column;
+  }
+  .import-summary{
+    display:flex;gap:24px;flex-wrap:wrap;padding:16px 0 20px;
+    border-bottom:1px solid var(--line);margin-bottom:16px;
+  }
+  .import-stat{display:flex;flex-direction:column;gap:2px;min-width:90px}
+  .import-stat-num{font-family:'Fraunces',serif;font-size:24px;font-weight:500;line-height:1}
+  .import-stat-num.warn{color:var(--yellow,#b88918)}
+  .import-stat-num.err{color:var(--red,#a83028)}
+  .import-stat-lbl{
+    font-family:'JetBrains Mono',monospace;font-size:10px;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--muted);
+  }
+  .import-cols{
+    margin-bottom:16px;font-size:12px;
+  }
+  .import-cols-head{
+    font-family:'JetBrains Mono',monospace;font-size:10px;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px;
+  }
+  .import-col-tag{
+    display:inline-block;padding:3px 9px;margin:2px 4px 2px 0;
+    border-radius:99px;font-size:11px;background:#eee8db;color:#6b6457;
+  }
+  .import-col-tag.match{background:var(--green-soft,#dcefdb);color:var(--green,#2d7a2f)}
+  .import-col-tag.miss{background:var(--red-soft,#f7dadc);color:var(--red,#a83028);text-decoration:line-through}
+  .import-table-wrap{
+    overflow:auto;max-height:300px;border:1px solid var(--line);border-radius:10px;
+    margin-bottom:16px;
+  }
+  .import-table{width:100%;border-collapse:collapse;font-size:12px}
+  .import-table th{
+    text-align:left;padding:8px 12px;background:var(--bg,#faf8f3);
+    font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;
+    text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+    border-bottom:1px solid var(--line);position:sticky;top:0;white-space:nowrap;
+  }
+  .import-table td{
+    padding:8px 12px;border-bottom:1px solid var(--line);
+    max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .import-table tbody tr:last-child td{border-bottom:none}
+  .import-progress{
+    padding:12px 14px;border:1px solid var(--line);border-radius:10px;
+    background:var(--bg,#faf8f3);margin-bottom:12px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;
+  }
+  .import-progress-bar{
+    height:6px;background:#f3ede0;border-radius:99px;overflow:hidden;margin-top:8px;
+  }
+  .import-progress-fill{
+    height:100%;background:linear-gradient(90deg,var(--accent),#e8704a);
+    transition:width .2s ease;width:0%;
+  }
 
   /* —— Gallery Grid —— */
   .gallery{
@@ -571,6 +648,23 @@
       Grid
     </button>
   </div>
+  <a href="/sample.csv" download="sample.csv" class="tool-btn" id="sampleBtn" title="Download sample CSV template">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+    Sample
+  </a>
+  <button type="button" class="tool-btn" id="importBtn" title="Import rows from CSV">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Import
+  </button>
+  <button type="button" class="tool-btn" id="exportBtn" title="Export visible rows to CSV (plain text, opens in Excel)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    CSV
+  </button>
+  <button type="button" class="tool-btn tool-btn-excel" id="exportExcelBtn" title="Export visible rows as .xlsx (Excel native format)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="10" y1="9" x2="14" y2="9"/></svg>
+    Excel
+  </button>
+  <input type="file" id="importFile" accept=".csv,text/csv" style="display:none">
 </div>
 
 <main class="gallery" id="gallery">
@@ -592,6 +686,21 @@
       <button class="btn delete-btn" id="deleteBtn" style="display:none" onclick="deleteEntry()">Delete</button>
       <button class="btn" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveEntry()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Import Preview Modal -->
+<div class="modal-backdrop" id="importModal">
+  <div class="modal import-preview">
+    <div class="modal-header">
+      <h3 id="importTitle">Import CSV</h3>
+      <button class="close-btn" onclick="closeImportModal()">×</button>
+    </div>
+    <div id="importBody"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeImportModal()" id="importCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="importConfirmBtn" onclick="runImport()">Import</button>
     </div>
   </div>
 </div>
@@ -623,6 +732,13 @@ document.getElementById('modal').onclick = (e) => {
 document.getElementById('autoBtn').onclick = toggleAuto;
 document.getElementById('viewCardsBtn').onclick = () => setView('cards');
 document.getElementById('viewGridBtn').onclick = () => setView('grid');
+document.getElementById('exportBtn').onclick = exportCSV;
+document.getElementById('exportExcelBtn').onclick = exportExcel;
+document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+document.getElementById('importFile').onchange = onImportFile;
+document.getElementById('importModal').onclick = (e) => {
+  if (e.target.id === 'importModal') closeImportModal();
+};
 document.getElementById('systemFilter').onchange = (e) => {
   systemFilter = e.target.value;
   e.target.classList.toggle('active', !!systemFilter);
@@ -1339,6 +1455,412 @@ async function deleteEntry(){
   } catch (err) {
     showToast(err.message, 'error');
   }
+}
+
+// ————— CSV Import/Export —————
+// Property types that participate in CSV (read & write).
+// created_time / last_edited_time are exported as text but skipped on import.
+const CSV_EXPORTABLE = new Set([
+  'title','rich_text','number','select','status','multi_select',
+  'date','checkbox','url','email','phone_number',
+  'created_time','last_edited_time'
+]);
+const CSV_IMPORTABLE = new Set([
+  'title','rich_text','number','select','status','multi_select',
+  'date','checkbox','url','email','phone_number'
+]);
+const MULTI_SEP = '|';   // separator for multi_select values inside a CSV cell
+
+// Convert a Notion property value into a plain CSV cell string.
+function propToCsv(prop){
+  if (!prop) return '';
+  switch(prop.type){
+    case 'title':       return prop.title.map(t=>t.plain_text).join('');
+    case 'rich_text':   return prop.rich_text.map(t=>t.plain_text).join('');
+    case 'number':      return prop.number == null ? '' : String(prop.number);
+    case 'select':      return prop.select ? prop.select.name : '';
+    case 'status':      return prop.status ? prop.status.name : '';
+    case 'multi_select':return (prop.multi_select || []).map(t=>t.name).join(MULTI_SEP);
+    case 'date':        return prop.date ? (prop.date.end ? `${prop.date.start}/${prop.date.end}` : prop.date.start) : '';
+    case 'checkbox':    return prop.checkbox ? 'true' : 'false';
+    case 'url':         return prop.url || '';
+    case 'email':       return prop.email || '';
+    case 'phone_number':return prop.phone_number || '';
+    case 'created_time':     return prop.created_time || '';
+    case 'last_edited_time': return prop.last_edited_time || '';
+    default:            return '';
+  }
+}
+
+// Convert a CSV cell string into a Notion property payload for POST.
+// Returns null if the cell is blank and the type doesn't represent that as `null`.
+function csvToProp(value, type){
+  const v = (value ?? '').trim();
+  switch(type){
+    case 'title':
+      return { title: v ? [{ text: { content: v } }] : [] };
+    case 'rich_text':
+      return { rich_text: v ? [{ text: { content: v } }] : [] };
+    case 'number': {
+      if (v === '') return { number: null };
+      const n = Number(v);
+      return { number: Number.isFinite(n) ? n : null };
+    }
+    case 'select':
+      return v ? { select: { name: v } } : { select: null };
+    case 'status':
+      return v ? { status: { name: v } } : undefined;  // status can't be null
+    case 'multi_select': {
+      // Accept either MULTI_SEP or comma as separator
+      const parts = v
+        ? v.split(v.includes(MULTI_SEP) ? MULTI_SEP : ',').map(s=>s.trim()).filter(Boolean)
+        : [];
+      return { multi_select: parts.map(name => ({ name })) };
+    }
+    case 'date': {
+      if (!v) return { date: null };
+      const [start, end] = v.split('/').map(s=>s.trim());
+      return { date: end ? { start, end } : { start } };
+    }
+    case 'checkbox':
+      return { checkbox: /^(true|1|yes|✓|y)$/i.test(v) };
+    case 'url':          return { url: v || null };
+    case 'email':        return { email: v || null };
+    case 'phone_number': return { phone_number: v || null };
+    default:             return undefined;
+  }
+}
+
+// Quote a value per RFC 4180.
+function csvQuote(s){
+  s = s == null ? '' : String(s);
+  if (/[",\r\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+  return s;
+}
+
+// Build a CSV string from rows of [{ header: value, ... }].
+function buildCsv(headers, rows){
+  const lines = [headers.map(csvQuote).join(',')];
+  for (const r of rows){
+    lines.push(headers.map(h => csvQuote(r[h] ?? '')).join(','));
+  }
+  return lines.join('\r\n');
+}
+
+// Robust CSV parser: handles quotes, escaped quotes, commas/newlines inside fields.
+function parseCsv(text){
+  // Strip BOM
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuote = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (inQuote){
+      if (c === '"'){
+        if (text[i+1] === '"'){ field += '"'; i++; }
+        else inQuote = false;
+      } else {
+        field += c;
+      }
+    } else {
+      if (c === '"') inQuote = true;
+      else if (c === ','){ row.push(field); field = ''; }
+      else if (c === '\r'){ /* skip CR; LF handled below */ }
+      else if (c === '\n'){
+        row.push(field); rows.push(row); row = []; field = '';
+      } else field += c;
+    }
+  }
+  // Flush last field/row
+  if (field.length || row.length){ row.push(field); rows.push(row); }
+  // Drop trailing empty row
+  while (rows.length && rows[rows.length-1].every(c => c === '')) rows.pop();
+  return rows;
+}
+
+// ————— Export —————
+function exportCSV(){
+  if (!dbSchema || !pages.length){
+    showToast('No data to export', 'error');
+    return;
+  }
+  // Pick exportable columns; put title first
+  const cols = Object.entries(dbSchema.properties)
+    .filter(([,s]) => CSV_EXPORTABLE.has(s.type))
+    .map(([name,s]) => ({ name, type: s.type }));
+  cols.sort((a,b) => (a.type==='title'?-1:0) - (b.type==='title'?-1:0));
+
+  // Apply current filters (search + system filter) so user exports what they see
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  let filtered = pages;
+  if (systemFilter && systemPropName){
+    filtered = filtered.filter(p => p.properties[systemPropName]?.select?.name === systemFilter);
+  }
+  if (q){
+    filtered = filtered.filter(p => JSON.stringify(p.properties).toLowerCase().includes(q));
+  }
+
+  const headers = cols.map(c => c.name);
+  const rows = filtered.map(page => {
+    const obj = {};
+    cols.forEach(c => { obj[c.name] = propToCsv(page.properties[c.name]); });
+    return obj;
+  });
+
+  const csv = '﻿' + buildCsv(headers, rows);  // BOM so Excel detects UTF-8
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dbName = (dbSchema.title?.map(t=>t.plain_text).join('') || 'export').replace(/[\\/:*?"<>|]/g,'_');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `${dbName}-${date}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast(`Exported ${rows.length} record(s)`, 'success');
+}
+
+// ————— Export Excel (.xlsx via SheetJS) —————
+// Same column / filter logic as exportCSV, but writes a native .xlsx file with
+// typed cells (numbers as Number, dates as Date, checkboxes as boolean) so
+// Excel formats them correctly. Falls back to a CSV download if SheetJS hasn't
+// loaded (offline CDN).
+function propToCell(prop){
+  if (!prop) return '';
+  switch(prop.type){
+    case 'number':           return prop.number == null ? '' : prop.number;
+    case 'checkbox':         return prop.checkbox === true;
+    case 'date':             return prop.date?.start ? new Date(prop.date.start) : '';
+    case 'created_time':     return prop.created_time ? new Date(prop.created_time) : '';
+    case 'last_edited_time': return prop.last_edited_time ? new Date(prop.last_edited_time) : '';
+    default:                 return propToCsv(prop);
+  }
+}
+
+function exportExcel(){
+  if (typeof XLSX === 'undefined'){
+    showToast('Excel library not loaded — falling back to CSV', 'error');
+    exportCSV();
+    return;
+  }
+  if (!dbSchema || !pages.length){
+    showToast('No data to export', 'error');
+    return;
+  }
+
+  const cols = Object.entries(dbSchema.properties)
+    .filter(([,s]) => CSV_EXPORTABLE.has(s.type))
+    .map(([name,s]) => ({ name, type: s.type }));
+  cols.sort((a,b) => (a.type==='title'?-1:0) - (b.type==='title'?-1:0));
+
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  let filtered = pages;
+  if (systemFilter && systemPropName){
+    filtered = filtered.filter(p => p.properties[systemPropName]?.select?.name === systemFilter);
+  }
+  if (q){
+    filtered = filtered.filter(p => JSON.stringify(p.properties).toLowerCase().includes(q));
+  }
+
+  const headers = cols.map(c => c.name);
+  const aoa = [headers];
+  filtered.forEach(page => {
+    aoa.push(cols.map(c => propToCell(page.properties[c.name])));
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  // Auto-width columns based on max content length (capped)
+  ws['!cols'] = cols.map((c, i) => {
+    let max = c.name.length;
+    for (let r = 1; r < aoa.length; r++){
+      const v = aoa[r][i];
+      const len = v instanceof Date ? 12 : String(v ?? '').length;
+      if (len > max) max = len;
+    }
+    return { wch: Math.min(50, Math.max(8, max + 2)) };
+  });
+
+  // Freeze header row + style header bold (only if SheetJS pro/styling not avail, this is a noop)
+  ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+
+  const wb = XLSX.utils.book_new();
+  const sheetName = (dbSchema.title?.map(t=>t.plain_text).join('') || 'Sheet1').slice(0, 31);
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+  const dbName = (dbSchema.title?.map(t=>t.plain_text).join('') || 'export').replace(/[\\/:*?"<>|]/g,'_');
+  const date = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `${dbName}-${date}.xlsx`);
+  showToast(`Exported ${filtered.length} record(s) as Excel`, 'success');
+}
+
+// ————— Import —————
+let importQueue = null;  // { headers, rows, mapping } prepared for confirmation
+
+async function onImportFile(e){
+  const file = e.target.files?.[0];
+  e.target.value = '';  // allow re-selecting same file
+  if (!file) return;
+  if (!dbSchema){
+    showToast('Schema not loaded yet', 'error');
+    return;
+  }
+
+  let text;
+  try { text = await file.text(); }
+  catch(err){ showToast('Cannot read file', 'error'); return; }
+
+  const matrix = parseCsv(text);
+  if (matrix.length < 2){
+    showToast('CSV needs a header row + at least one data row', 'error');
+    return;
+  }
+
+  const headers = matrix[0].map(h => h.trim());
+  const dataRows = matrix.slice(1);
+
+  // Map header -> schema property (case-insensitive, exact match)
+  const schemaProps = dbSchema.properties || {};
+  const propByLower = {};
+  Object.keys(schemaProps).forEach(k => { propByLower[k.toLowerCase()] = k; });
+
+  const mapping = headers.map(h => {
+    const propName = propByLower[h.toLowerCase()];
+    if (!propName) return { header: h, propName: null, type: null, ok: false, reason: 'no-match' };
+    const type = schemaProps[propName].type;
+    if (!CSV_IMPORTABLE.has(type)) return { header: h, propName, type, ok: false, reason: 'read-only' };
+    return { header: h, propName, type, ok: true };
+  });
+
+  importQueue = { headers, rows: dataRows, mapping };
+  openImportPreview();
+}
+
+function openImportPreview(){
+  if (!importQueue) return;
+  const { headers, rows, mapping } = importQueue;
+  const matchedCount = mapping.filter(m => m.ok).length;
+  const skippedCount = mapping.length - matchedCount;
+
+  const body = document.getElementById('importBody');
+  const sampleRows = rows.slice(0, 5);
+  const colTags = mapping.map(m => {
+    if (m.ok) return `<span class="import-col-tag match" title="${escapeHtml(m.type)}">${escapeHtml(m.header)}</span>`;
+    return `<span class="import-col-tag miss" title="${m.reason === 'no-match' ? 'No matching property' : 'Read-only / unsupported'}">${escapeHtml(m.header)}</span>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="import-summary">
+      <div class="import-stat">
+        <div class="import-stat-num">${rows.length}</div>
+        <div class="import-stat-lbl">rows</div>
+      </div>
+      <div class="import-stat">
+        <div class="import-stat-num">${matchedCount}</div>
+        <div class="import-stat-lbl">columns matched</div>
+      </div>
+      <div class="import-stat">
+        <div class="import-stat-num ${skippedCount?'warn':''}">${skippedCount}</div>
+        <div class="import-stat-lbl">columns skipped</div>
+      </div>
+    </div>
+    <div class="import-cols">
+      <div class="import-cols-head">Columns ( <span style="color:var(--green,#2d7a2f)">●</span> matched ·
+        <span style="color:var(--red,#a83028)">●</span> skipped )</div>
+      ${colTags}
+    </div>
+    <div class="import-cols-head">Preview · first ${sampleRows.length} rows</div>
+    <div class="import-table-wrap">
+      <table class="import-table">
+        <thead><tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>
+        <tbody>
+          ${sampleRows.map(r => `<tr>${r.map(c => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div id="importProgressSlot"></div>
+  `;
+  document.getElementById('importConfirmBtn').textContent =
+    matchedCount === 0 ? 'No matched columns' : `Import ${rows.length} row(s)`;
+  document.getElementById('importConfirmBtn').disabled = matchedCount === 0 || rows.length === 0;
+  document.getElementById('importModal').classList.add('show');
+}
+
+function closeImportModal(){
+  document.getElementById('importModal').classList.remove('show');
+  importQueue = null;
+}
+
+async function runImport(){
+  if (!importQueue) return;
+  const { rows, mapping } = importQueue;
+
+  const slot = document.getElementById('importProgressSlot');
+  slot.innerHTML = `
+    <div class="import-progress">
+      <div id="importProgressText">Importing 0/${rows.length}…</div>
+      <div class="import-progress-bar"><div class="import-progress-fill" id="importProgressFill"></div></div>
+    </div>`;
+  const txt = document.getElementById('importProgressText');
+  const fill = document.getElementById('importProgressFill');
+  const confirmBtn = document.getElementById('importConfirmBtn');
+  const cancelBtn = document.getElementById('importCancelBtn');
+  confirmBtn.disabled = true;
+  cancelBtn.disabled = true;
+
+  let ok = 0, fail = 0;
+  const failures = [];
+
+  for (let i = 0; i < rows.length; i++){
+    const row = rows[i];
+    const properties = {};
+    mapping.forEach((m, idx) => {
+      if (!m.ok) return;
+      const cell = row[idx];
+      const payload = csvToProp(cell, m.type);
+      if (payload !== undefined) properties[m.propName] = payload;
+    });
+
+    try {
+      const res = await fetch(`${API}/api/pages`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ properties })
+      });
+      if (!res.ok){
+        const err = await res.json().catch(()=>({}));
+        throw new Error(err.message || `HTTP ${res.status}`);
+      }
+      ok++;
+    } catch(err){
+      fail++;
+      failures.push({ row: i+2, message: err.message || String(err) });  // +2 = header offset + 1-indexed
+    }
+
+    const done = i + 1;
+    txt.textContent = `Importing ${done}/${rows.length}…  (✓ ${ok}  ✗ ${fail})`;
+    fill.style.width = (done / rows.length * 100) + '%';
+  }
+
+  txt.textContent = `Done — ${ok} created, ${fail} failed`;
+  cancelBtn.disabled = false;
+  cancelBtn.textContent = 'Close';
+  confirmBtn.style.display = 'none';
+
+  if (failures.length){
+    const max = 8;
+    const list = failures.slice(0, max).map(f => `Row ${f.row}: ${escapeHtml(f.message)}`).join('<br>');
+    const more = failures.length > max ? `<br><span style="color:var(--muted)">…and ${failures.length-max} more</span>` : '';
+    slot.insertAdjacentHTML('beforeend',
+      `<div style="margin-top:10px;font-size:12px;color:var(--red,#a83028);line-height:1.6">${list}${more}</div>`);
+  }
+
+  showToast(`Imported ${ok}/${rows.length}`, fail ? 'error' : 'success');
+  await loadData(true);
 }
 
 // ————— Utils —————

@@ -1,0 +1,29 @@
+# Render Blueprint — Infrastructure-as-Code for Regist LabOnline
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Deploy:
+#   1) Push this file to GitHub.
+#   2) Render Dashboard -> New + -> Blueprint -> select the repo.
+#   3) Render reads this file and creates the service.
+#   4) Set the two secret env vars (NOTION_TOKEN, DATABASE_ID) in the UI before
+#      first deploy (they are NOT in this file because secrets must not be committed).
+
+services:
+  - type: web
+    name: regist-labonline
+    runtime: node
+    plan: free            # change to "starter" ($7/mo) to avoid 15-min idle sleep
+    region: singapore      # closest to Thailand; alternatives: oregon, frankfurt, ohio
+    branch: main
+    buildCommand: npm install
+    startCommand: node server.js
+    autoDeploy: true       # rebuild on every push to `branch`
+    healthCheckPath: /api/database
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NOTION_TOKEN
+        sync: false        # set this value manually in Render UI (secret)
+      - key: DATABASE_ID
+        sync: false        # set this value manually in Render UI
+      # PORT is auto-set by Render; server.js already reads process.env.PORT.
