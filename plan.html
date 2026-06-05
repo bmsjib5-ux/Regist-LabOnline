@@ -93,6 +93,56 @@
   .hero h2 em{font-style:italic;color:var(--accent);font-weight:300}
   .hero p{color:var(--ink-soft);font-size:15px;line-height:1.6;max-width:680px}
 
+  /* —— Plan stats (mini dashboard) —— */
+  .plan-stats{
+    max-width:1400px;margin:0 auto;padding:8px 32px 8px;
+    display:grid;gap:14px;grid-template-columns:repeat(3, 1fr);
+  }
+  @media (max-width:900px){
+    .plan-stats{grid-template-columns:1fr}
+  }
+  .stat-card{
+    background:var(--bg-card);border:1px solid var(--line);border-radius:14px;
+    padding:18px 22px;box-shadow:var(--shadow-sm);
+    transition:box-shadow .2s;
+  }
+  .stat-card:hover{box-shadow:var(--shadow-md)}
+  .stat-card-label{
+    font-family:'JetBrains Mono',monospace;font-size:10px;
+    text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
+    display:flex;align-items:center;gap:8px;margin-bottom:14px;
+    padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+  .stat-card-label::before{
+    content:'';width:8px;height:8px;border-radius:50%;background:var(--muted);
+  }
+  .stat-card.stat-total .stat-card-label::before{background:var(--accent)}
+  .stat-card.stat-installing .stat-card-label::before{background:var(--orange)}
+  .stat-card.stat-installed .stat-card-label::before{background:var(--teal)}
+  .stat-card-row{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:5px 0;
+  }
+  .stat-name{
+    font-size:13px;color:var(--ink-soft);
+    display:inline-flex;align-items:baseline;gap:6px;
+  }
+  .stat-sub{
+    font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.05em;
+  }
+  .stat-value{
+    font-family:'Fraunces',serif;font-size:26px;font-weight:500;
+    color:var(--ink);letter-spacing:-.01em;line-height:1;
+  }
+  .stat-unit{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+    font-weight:400;letter-spacing:.05em;
+  }
+  .stat-card.stat-total .stat-value{color:var(--accent)}
+  .stat-card.stat-installing .stat-value{color:var(--orange)}
+  .stat-card.stat-installed .stat-value{color:var(--teal)}
+
   /* —— Toolbar —— */
   .toolbar{
     max-width:1400px;margin:0 auto;padding:16px 32px 12px;
@@ -190,6 +240,7 @@
   .plan-tag.tag-pcu{background:var(--blue-soft);color:var(--blue)}
   .plan-tag.tag-hub{background:#e5ddf5;color:var(--purple)}
   .plan-tag.tag-system{background:var(--accent-soft);color:var(--accent)}
+  .plan-tag.tag-installed{background:#dff1ed;color:var(--teal);font-weight:600}
   .plan-card-row{
     display:flex;align-items:center;justify-content:space-between;gap:8px;
     margin-top:10px;padding-top:10px;border-top:1px solid var(--line);
@@ -204,6 +255,13 @@
   }
   .assignee-select:focus{outline:none;border-color:var(--accent)}
   .assignee-select.unassigned{color:var(--muted);font-style:italic}
+  .installed-input{
+    width:96px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;
+    font-family:inherit;font-size:11px;text-align:center;background:#fff;
+    color:var(--ink);transition:border-color .15s;
+  }
+  .installed-input:focus{outline:none;border-color:var(--teal);background:#dff1ed}
+  .installed-input::placeholder{color:var(--muted);font-style:italic;font-size:10px}
   .quick-btn{
     border:1px solid var(--line);background:#fff;color:var(--ink-soft);
     font-family:inherit;font-size:11px;font-weight:500;
@@ -335,6 +393,43 @@
   <p>วางแผนการติดตั้งระบบ ดึงรายชื่อจากสถานะ <strong>อนุมัติแล้ว</strong> มาแบ่งเป็น 3 lanes — มอบหมายผู้ดำเนินการ เลื่อนสถานะเป็น <em>กำลังติดตั้ง</em> เมื่อเริ่มงาน แล้วปิดงานเป็น <em>ติดตั้งสำเร็จ</em> เมื่อเสร็จ</p>
 </section>
 
+<!-- Mini dashboard: Hub/Node counts split by status (respects current filters) -->
+<section class="plan-stats">
+  <div class="stat-card stat-total">
+    <div class="stat-card-label">ทั้งหมด · ในแผน</div>
+    <div class="stat-card-row">
+      <span class="stat-name">แม่ข่าย</span>
+      <span class="stat-value" id="statTotalHub">—</span>
+    </div>
+    <div class="stat-card-row">
+      <span class="stat-name" title="รวมจาก จำนวนPCU ของทุก record ในแผน">ลูกข่าย <span class="stat-sub">(จาก จำนวนPCU)</span></span>
+      <span class="stat-value" id="statTotalNode">— <span class="stat-unit">PCU</span></span>
+    </div>
+  </div>
+  <div class="stat-card stat-installing">
+    <div class="stat-card-label">กำลังติดตั้ง</div>
+    <div class="stat-card-row">
+      <span class="stat-name">แม่ข่าย</span>
+      <span class="stat-value" id="statInstallingHub">—</span>
+    </div>
+    <div class="stat-card-row">
+      <span class="stat-name" title="รวมจาก จำนวนPCU ของ record ที่กำลังติดตั้ง">ลูกข่าย <span class="stat-sub">(จาก จำนวนPCU)</span></span>
+      <span class="stat-value" id="statInstallingNode">— <span class="stat-unit">PCU</span></span>
+    </div>
+  </div>
+  <div class="stat-card stat-installed">
+    <div class="stat-card-label">ติดตั้งสำเร็จ</div>
+    <div class="stat-card-row">
+      <span class="stat-name">แม่ข่าย</span>
+      <span class="stat-value" id="statInstalledHub">—</span>
+    </div>
+    <div class="stat-card-row">
+      <span class="stat-name" title="รวมจาก จำนวนติดตั้งPCU ของทุก record ที่ติดตั้งสำเร็จ">ลูกข่าย <span class="stat-sub">(จาก ติดตั้งPCU)</span></span>
+      <span class="stat-value" id="statInstalledNode">— <span class="stat-unit">PCU</span></span>
+    </div>
+  </div>
+</section>
+
 <div class="toolbar">
   <div class="toolbar-left">
     <div class="search-box">
@@ -416,7 +511,8 @@ let hospitalName = null;
 let positionName = null;
 let phoneName = null;
 let hubName = null;
-let pcuField = null;
+let pcuField = null;          // จำนวนPCU — total PCU registered
+let pcuInstalledField = null; // จำนวนติดตั้งPCU — actually installed
 
 const APPROVED   = /อนุมัติแล้ว|approved/i;
 const INSTALLING = /กำลังติดตั้ง|installing|in\s*progress/i;
@@ -487,7 +583,8 @@ function resolvePropertyNames(){
   hubName       = findSelectByName(/แม่ข่าย|hub|parent/i);
 
   const pcuCands = Object.keys(props).filter(k => props[k].type === 'number' && /pcu/i.test(k));
-  pcuField = pcuCands.find(k => !/ติดตั้ง|installed/i.test(k)) || pcuCands[0] || null;
+  pcuField          = pcuCands.find(k => !/ติดตั้ง|installed/i.test(k)) || pcuCands[0] || null;
+  pcuInstalledField = pcuCands.find(k =>  /ติดตั้ง|installed/i.test(k)) || null;
 }
 
 function populateFilters(){
@@ -534,6 +631,7 @@ function applyFilters(arr){
 
 function render(){
   const view = applyFilters(pages);
+  renderStats(view);
   const lanes = { approved: [], installing: [], installed: [] };
   for (const p of view){
     const v = p.properties[statusName]?.status?.name;
@@ -561,6 +659,47 @@ function render(){
     `แสดง <strong>${totalCount}</strong> งาน · รวม <strong>${pcuSum}</strong> PCU`;
 }
 
+// Mini-dashboard at the top.
+//   แม่ข่าย = count of records where แม่ข่าย/ลูกข่าย = แม่ข่าย
+//   ลูกข่าย = SUM of a PCU field across the subset:
+//     · Row 1 (ทั้งหมด) and Row 2 (กำลังติดตั้ง)  → sum of จำนวนPCU       (planned)
+//     · Row 3 (ติดตั้งสำเร็จ)                       → sum of จำนวนติดตั้งPCU (actual)
+function renderStats(view){
+  const hubOf = (p) => p.properties[hubName]?.select?.name || '';
+  const stOf  = (p) => p.properties[statusName]?.status?.name || '';
+  const isHub = (p) => /แม่ข่าย|parent|hub/i.test(hubOf(p));
+  const inPipeline = (p) => {
+    const s = stOf(p);
+    return APPROVED.test(s) || INSTALLING.test(s) || INSTALLED.test(s);
+  };
+  const sumField = (arr, field) => field
+    ? arr.reduce((s, p) => s + (p.properties[field]?.number || 0), 0)
+    : 0;
+
+  // Row 1: all 3 statuses
+  const all = view.filter(inPipeline);
+  const totalHub    = all.filter(isHub).length;
+  const totalNodePCU = sumField(all, pcuField);
+
+  // Row 2: installing only
+  const installing = view.filter(p => INSTALLING.test(stOf(p)));
+  const installingHub    = installing.filter(isHub).length;
+  const installingNodePCU = sumField(installing, pcuField);
+
+  // Row 3: installed only — ลูกข่าย uses จำนวนติดตั้งPCU (actual)
+  const installed = view.filter(p => INSTALLED.test(stOf(p)));
+  const installedHub    = installed.filter(isHub).length;
+  const installedNodePCU = sumField(installed, pcuInstalledField);
+
+  const pcuTag = '<span class="stat-unit">PCU</span>';
+  document.getElementById('statTotalHub').textContent      = totalHub;
+  document.getElementById('statTotalNode').innerHTML       = `${totalNodePCU} ${pcuTag}`;
+  document.getElementById('statInstallingHub').textContent = installingHub;
+  document.getElementById('statInstallingNode').innerHTML  = `${installingNodePCU} ${pcuTag}`;
+  document.getElementById('statInstalledHub').textContent  = installedHub;
+  document.getElementById('statInstalledNode').innerHTML   = `${installedNodePCU} ${pcuTag}`;
+}
+
 function renderLane(elId, list, kind){
   const el = document.getElementById(elId);
   if (!list.length){
@@ -579,7 +718,8 @@ function renderCard(page, kind){
   const system   = systemName ? (p[systemName]?.select?.name || '') : '';
   const hub      = hubName ? (p[hubName]?.select?.name || '') : '';
   const assignee = assigneeName ? (p[assigneeName]?.select?.name || '') : '';
-  const pcu      = pcuField ? (p[pcuField]?.number || 0) : 0;
+  const pcu          = pcuField ? (p[pcuField]?.number || 0) : 0;
+  const pcuInstalled = pcuInstalledField ? (p[pcuInstalledField]?.number ?? null) : null;
 
   const title = hospital || person || '(ไม่ระบุ)';
   const personLine = [person && hospital ? person : '', position]
@@ -589,6 +729,10 @@ function renderCard(page, kind){
   if (system) tags.push(`<span class="plan-tag tag-system">${escapeHtml(system)}</span>`);
   if (hub)    tags.push(`<span class="plan-tag tag-hub">${escapeHtml(hub)}</span>`);
   if (pcu)    tags.push(`<span class="plan-tag tag-pcu">PCU ${pcu}</span>`);
+  // Show "ติดตั้ง N / Total PCU" tag in the installed lane
+  if (kind === 'installed' && (pcuInstalled ?? 0) > 0){
+    tags.push(`<span class="plan-tag tag-installed">ติดตั้ง ${pcuInstalled}${pcu ? ' / ' + pcu : ''} PCU</span>`);
+  }
 
   // Assignee dropdown lets user reassign in-place
   const assigneeOpts = assigneeName
@@ -602,6 +746,16 @@ function renderCard(page, kind){
          ${assigneeOpts}
        </select>`
     : `<span class="summary-chip">${assignee ? '👤 ' + escapeHtml(assignee) : '—'}</span>`;
+
+  // Installing lane gets an inline input so user can record "ติดตั้งกี่ PCU
+  // แล้ว" while the job is in progress. Blur or Enter triggers a PATCH.
+  const installedInput = (kind === 'installing' && pcuInstalledField)
+    ? `<input type="number" min="0" step="1" class="installed-input"
+              value="${pcuInstalled ?? ''}" placeholder="ติดตั้ง"
+              title="จำนวน PCU ที่ติดตั้งแล้ว (Enter / กดออกเพื่อบันทึก)"
+              data-id="${page.id}"
+              onblur="updateInstalled(this)"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">` : '';
 
   let actionBtn = '';
   if (kind === 'approved'){
@@ -623,6 +777,7 @@ function renderCard(page, kind){
       ${tags.length ? `<div class="plan-card-tags">${tags.join('')}</div>` : ''}
       <div class="plan-card-row">
         ${assigneeSelect}
+        ${installedInput}
         ${actionBtn}
       </div>
     </div>`;
@@ -655,6 +810,41 @@ async function advance(pageId, toKind){
     await load();
   } catch (err) {
     showToast(err.message, 'error');
+  }
+}
+
+async function updateInstalled(inputEl){
+  if (!pcuInstalledField) return;
+  const id = inputEl.dataset.id;
+  const raw = inputEl.value.trim();
+  const val = raw === '' ? null : Number(raw);
+  if (val !== null && (!Number.isFinite(val) || val < 0)){
+    showToast('กรอกตัวเลข ≥ 0', 'error');
+    // Revert to previous value if invalid
+    const page = pages.find(p => p.id === id);
+    inputEl.value = page?.properties[pcuInstalledField]?.number ?? '';
+    return;
+  }
+  // Skip PATCH if value hasn't changed
+  const page = pages.find(p => p.id === id);
+  const prev = page?.properties[pcuInstalledField]?.number ?? null;
+  if (prev === val) return;
+  try {
+    const res = await fetch(`${API}/api/pages/${id}`, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ properties: { [pcuInstalledField]: { number: val } } })
+    });
+    if (!res.ok){
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
+    // Optimistic local update
+    if (page) page.properties[pcuInstalledField] = { type:'number', number: val };
+    showToast(val === null ? 'ล้างค่า PCU ติดตั้ง' : `บันทึก ${val} PCU`, 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+    await load();
   }
 }
 
@@ -692,7 +882,9 @@ let editingPage = null;
 // Click on a card opens the Edit drawer — but only when the click was NOT
 // on an interactive child (assignee dropdown or quick-action button).
 document.addEventListener('click', (e) => {
-  if (e.target.closest('.assignee-select') || e.target.closest('.quick-btn')) return;
+  if (e.target.closest('.assignee-select') ||
+      e.target.closest('.quick-btn') ||
+      e.target.closest('.installed-input')) return;
   const card = e.target.closest('.plan-card');
   if (!card) return;
   openEdit(card.dataset.id);
