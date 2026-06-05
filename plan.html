@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Regist LabOnline · Plan</title>
+<link rel="manifest" href="/manifest.json" />
+<link rel="icon" type="image/svg+xml" href="/icon.svg" />
+<meta name="theme-color" content="#d4532d" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf8f3; --bg-card:#ffffff;
+    --ink:#1a1a1a; --ink-soft:#555; --muted:#8a8580;
+    --line:#e8e2d5;
+    --accent:#d4532d; --accent-soft:#f4e4dd;
+    --green:#2d7a2f; --green-soft:#dcefdb;
+    --yellow:#b88918; --yellow-soft:#f7ebc4;
+    --red:#a83028; --red-soft:#f7dadc;
+    --blue:#2c5aa0; --blue-soft:#dde6f5;
+    --orange:#c2601f;
+    --teal:#0f766e;
+    --purple:#5c3fa0;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.03);
+    --shadow-md:0 4px 12px rgba(0,0,0,.06), 0 2px 4px rgba(0,0,0,.04);
+    --shadow-lg:0 20px 40px rgba(0,0,0,.08), 0 8px 16px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{
+    background:var(--bg);color:var(--ink);
+    font-family:'IBM Plex Sans Thai',system-ui,sans-serif;
+    min-height:100vh;-webkit-font-smoothing:antialiased;
+  }
+  body{
+    background:
+      radial-gradient(circle at 10% 0%, #fff1e9 0%, transparent 40%),
+      radial-gradient(circle at 90% 100%, #f0ece0 0%, transparent 50%),
+      var(--bg);
+  }
+
+  /* —— Topbar (matches Gallery/Insight) —— */
+  .topbar{
+    border-bottom:1px solid var(--line);
+    background:rgba(250,248,243,.85);backdrop-filter:blur(12px);
+    position:sticky;top:0;z-index:50;
+  }
+  .topbar-inner{
+    max-width:none;margin:0 auto;padding:18px 32px;
+    display:flex;align-items:center;justify-content:space-between;gap:24px;
+  }
+  .brand{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit}
+  .brand-mark{
+    width:40px;height:40px;border-radius:10px;
+    background:linear-gradient(135deg,var(--accent),#b33f1f);
+    display:grid;place-items:center;color:#fff;font-weight:700;
+    font-family:'Fraunces',serif;font-size:22px;font-style:italic;
+    box-shadow:var(--shadow-md);
+  }
+  .brand-text h1{font-family:'Fraunces',serif;font-weight:500;font-size:22px;letter-spacing:-.01em;line-height:1}
+  .brand-text p{font-size:12px;color:var(--muted);margin-top:4px;font-family:'JetBrains Mono',monospace}
+  .topbar-actions{display:flex;gap:8px;align-items:center}
+  .nav{display:flex;gap:2px;background:#eee8db;padding:4px;border-radius:10px;margin-right:8px}
+  .nav a{
+    text-decoration:none;font-size:13px;font-weight:500;color:var(--ink-soft);
+    padding:8px 16px;border-radius:7px;transition:all .15s;font-family:inherit;
+  }
+  .nav a:hover{color:var(--ink)}
+  .nav a.active{background:#fff;color:var(--ink);box-shadow:var(--shadow-sm)}
+  .btn{
+    border:1px solid var(--line);background:#fff;color:var(--ink);
+    padding:10px 18px;border-radius:8px;font-size:14px;font-weight:500;
+    font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
+    transition:all .15s;box-shadow:var(--shadow-sm);text-decoration:none;
+  }
+  .btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);border-color:#c9c2b0}
+  .btn-ghost{background:transparent;border-color:transparent;box-shadow:none}
+  .btn-ghost:hover{background:var(--accent-soft);color:var(--accent)}
+
+  /* —— Hero —— */
+  .hero{max-width:1400px;margin:0 auto;padding:48px 32px 16px}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:11px;
+    text-transform:uppercase;letter-spacing:.15em;color:var(--accent);
+    margin-bottom:16px;display:inline-flex;align-items:center;gap:8px;
+  }
+  .eyebrow::before{content:'';width:24px;height:1px;background:var(--accent)}
+  .hero h2{
+    font-family:'Fraunces',serif;font-weight:400;font-size:clamp(32px,4vw,52px);
+    letter-spacing:-.02em;line-height:1.05;margin-bottom:16px;
+  }
+  .hero h2 em{font-style:italic;color:var(--accent);font-weight:300}
+  .hero p{color:var(--ink-soft);font-size:15px;line-height:1.6;max-width:680px}
+
+  /* —— Toolbar —— */
+  .toolbar{
+    max-width:1400px;margin:0 auto;padding:16px 32px 12px;
+    display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+  }
+  .toolbar-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1}
+  .search-box{position:relative;min-width:240px;max-width:380px;flex:1}
+  .search-box svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  .search-box input{
+    width:100%;padding:10px 14px 10px 40px;border:1px solid var(--line);
+    border-radius:10px;background:#fff;font-family:inherit;font-size:13px;
+    transition:border-color .15s;
+  }
+  .search-box input:focus{outline:none;border-color:var(--accent)}
+  .filter-select{
+    padding:10px 32px 10px 14px;border:1px solid var(--line);border-radius:10px;
+    background:#fff;font-family:inherit;font-size:13px;color:var(--ink);
+    cursor:pointer;transition:border-color .15s;min-width:180px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8580' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;
+    appearance:none;-webkit-appearance:none;
+  }
+  .filter-select:focus{outline:none;border-color:var(--accent)}
+  .filter-select.active{
+    border-color:var(--accent);background-color:var(--accent-soft);
+    color:var(--accent);font-weight:500;
+  }
+  .summary-chip{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.1em;
+  }
+  .summary-chip strong{color:var(--ink);font-weight:600}
+
+  /* —— Kanban —— */
+  .kanban{
+    max-width:1400px;margin:0 auto;padding:8px 32px 80px;
+    display:grid;gap:18px;grid-template-columns:repeat(3, 1fr);
+  }
+  @media (max-width:1100px){
+    .kanban{grid-template-columns:1fr}
+  }
+  .lane{
+    background:var(--bg-card);border:1px solid var(--line);border-radius:16px;
+    box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column;
+    max-height:80vh;
+  }
+  .lane-header{
+    padding:16px 20px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:10px;
+  }
+  .lane-dot{width:10px;height:10px;border-radius:50%}
+  .lane-dot.blue{background:var(--blue)}
+  .lane-dot.orange{background:var(--orange)}
+  .lane-dot.teal{background:var(--teal)}
+  .lane-name{
+    flex:1;font-family:'Fraunces',serif;font-weight:500;font-size:17px;
+    letter-spacing:-.005em;
+  }
+  .lane-count{
+    background:var(--bg);color:var(--ink-soft);padding:3px 12px;border-radius:99px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;
+  }
+  .lane-body{
+    padding:14px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;
+  }
+  .lane-empty{
+    text-align:center;color:var(--muted);font-size:13px;
+    padding:30px 16px;font-style:italic;
+  }
+
+  /* —— Plan card —— */
+  .plan-card{
+    background:var(--bg-card);border:1px solid var(--line);border-radius:12px;
+    padding:14px 16px;transition:all .15s;
+  }
+  .plan-card:hover{box-shadow:var(--shadow-md);border-color:#c9c2b0}
+  .plan-card-title{
+    font-family:'Fraunces',serif;font-size:16px;font-weight:500;
+    letter-spacing:-.005em;line-height:1.3;color:var(--ink);
+  }
+  .plan-card-person{
+    font-size:12px;color:var(--ink-soft);margin-top:5px;line-height:1.4;
+  }
+  .plan-card-phone{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+  }
+  .plan-card-tags{
+    display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;
+  }
+  .plan-tag{
+    display:inline-block;padding:2px 9px;border-radius:99px;font-size:10px;
+    font-weight:500;background:var(--bg);color:var(--ink-soft);
+    font-family:'IBM Plex Sans Thai',system-ui,sans-serif;
+  }
+  .plan-tag.tag-pcu{background:var(--blue-soft);color:var(--blue)}
+  .plan-tag.tag-hub{background:#e5ddf5;color:var(--purple)}
+  .plan-tag.tag-system{background:var(--accent-soft);color:var(--accent)}
+  .plan-card-row{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    margin-top:10px;padding-top:10px;border-top:1px solid var(--line);
+  }
+  .assignee-select{
+    flex:1;padding:6px 26px 6px 10px;border:1px solid var(--line);
+    border-radius:8px;background:#fff;font-family:inherit;font-size:11px;
+    cursor:pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238a8580' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat:no-repeat;background-position:right 8px center;
+    appearance:none;-webkit-appearance:none;
+  }
+  .assignee-select:focus{outline:none;border-color:var(--accent)}
+  .assignee-select.unassigned{color:var(--muted);font-style:italic}
+  .quick-btn{
+    border:1px solid var(--line);background:#fff;color:var(--ink-soft);
+    font-family:inherit;font-size:11px;font-weight:500;
+    padding:6px 10px;border-radius:8px;cursor:pointer;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:4px;transition:all .15s;
+  }
+  .quick-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .quick-btn.primary:hover{background:#b33f1f;border-color:#b33f1f}
+  .quick-btn.secondary:hover{border-color:#c9c2b0;color:var(--ink)}
+  .quick-btn[disabled]{opacity:.5;cursor:not-allowed}
+
+  /* —— Edit drawer (right-side slide-in) —— */
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(20,18,14,.5);backdrop-filter:blur(4px);
+    display:none;z-index:100;
+  }
+  .modal-backdrop.show{display:block;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal-drawer{
+    position:fixed;top:0;right:0;bottom:0;left:auto;
+    margin:0;padding:0;
+    width:520px;max-width:92vw;height:100vh;
+    background:var(--bg-card);box-shadow:-12px 0 32px rgba(0,0,0,.18);
+    display:flex;flex-direction:column;
+    animation:slideInRight .3s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes slideInRight{
+    from{transform:translateX(100%);opacity:.4}
+    to{transform:translateX(0);opacity:1}
+  }
+  .modal-header{
+    margin:0;padding:22px 28px;background:var(--bg-card);
+    display:flex;justify-content:space-between;align-items:center;
+    border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:2;
+  }
+  .modal-header h3{font-family:'Fraunces',serif;font-weight:500;font-size:22px;letter-spacing:-.01em}
+  .close-btn{
+    border:none;background:transparent;font-size:24px;cursor:pointer;
+    color:var(--muted);padding:4px 10px;border-radius:6px;
+  }
+  .close-btn:hover{background:var(--accent-soft);color:var(--accent)}
+  #editForm{flex:1;overflow-y:auto;padding:22px 28px}
+  .form-group{margin-bottom:18px}
+  .form-group label{
+    display:block;font-family:'JetBrains Mono',monospace;font-size:10px;
+    text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px;
+  }
+  .form-group input,.form-group textarea,.form-group select{
+    width:100%;padding:10px 14px;border:1px solid var(--line);
+    border-radius:8px;font-family:inherit;font-size:14px;background:#fff;
+    transition:border-color .15s;
+  }
+  .form-group input:focus,.form-group textarea:focus,.form-group select:focus{
+    outline:none;border-color:var(--accent);
+  }
+  .form-group textarea{resize:vertical;min-height:80px}
+  .modal-actions{
+    margin:0;padding:18px 28px;background:var(--bg-card);
+    display:flex;justify-content:flex-end;gap:10px;
+    border-top:1px solid var(--line);
+    position:sticky;bottom:0;z-index:2;box-shadow:0 -1px 0 var(--line);
+  }
+  .btn-primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .btn-primary:hover{background:var(--accent);border-color:var(--accent)}
+  .delete-btn{color:#a83028;border-color:#f4c9c2;margin-right:auto}
+  .delete-btn:hover{background:#fdf5f3;border-color:#a83028}
+  .plan-card{cursor:pointer}
+
+  /* —— Toast —— */
+  .toast{
+    position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;
+    padding:14px 22px;border-radius:10px;font-size:14px;box-shadow:var(--shadow-lg);
+    z-index:200;opacity:0;transform:translateY(20px);transition:all .25s;
+  }
+  .toast.show{opacity:1;transform:translateY(0)}
+  .toast.success{background:var(--green)}
+  .toast.error{background:var(--red)}
+
+  /* —— Loading / error states —— */
+  .status{
+    grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);
+  }
+  .spinner{
+    width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--accent);
+    border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .error{
+    grid-column:1/-1;background:#fff;border:1px solid #f4c9c2;
+    border-radius:12px;padding:24px;color:#a83028;
+  }
+  .error h3{font-family:'Fraunces',serif;margin-bottom:8px}
+
+  @media (max-width:640px){
+    .hero,.toolbar,.kanban,.topbar-inner{padding-left:20px;padding-right:20px}
+    .filter-select{min-width:140px}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="/" class="brand">
+      <div class="brand-mark">N</div>
+      <div class="brand-text">
+        <h1>Notion Gallery</h1>
+        <p id="dbName">connecting…</p>
+      </div>
+    </a>
+    <div class="topbar-actions">
+      <nav class="nav">
+        <a href="/">Gallery</a>
+        <a href="/dashboard.html">Insight</a>
+        <a href="/plan.html" class="active">Plan</a>
+      </nav>
+      <button class="btn btn-ghost" id="refreshBtn" title="Refresh">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="eyebrow">Operations · ลงทะเบียน LAB Online</div>
+  <h2>Installation <em>Plan.</em></h2>
+  <p>วางแผนการติดตั้งระบบ ดึงรายชื่อจากสถานะ <strong>อนุมัติแล้ว</strong> มาแบ่งเป็น 3 lanes — มอบหมายผู้ดำเนินการ เลื่อนสถานะเป็น <em>กำลังติดตั้ง</em> เมื่อเริ่มงาน แล้วปิดงานเป็น <em>ติดตั้งสำเร็จ</em> เมื่อเสร็จ</p>
+</section>
+
+<div class="toolbar">
+  <div class="toolbar-left">
+    <div class="search-box">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="ค้นหาในงาน…" />
+    </div>
+    <select class="filter-select" id="assigneeFilter" aria-label="Filter by ผู้ดำเนินการ">
+      <option value="">ผู้ดำเนินการทั้งหมด</option>
+    </select>
+    <select class="filter-select" id="systemFilter" aria-label="Filter by ใช้ระบบ">
+      <option value="">ทุกระบบ</option>
+    </select>
+  </div>
+  <div class="summary-chip" id="summaryChip">—</div>
+</div>
+
+<main class="kanban" id="kanbanRoot">
+  <div class="lane">
+    <div class="lane-header">
+      <span class="lane-dot blue"></span>
+      <span class="lane-name">อนุมัติแล้ว · พร้อมติดตั้ง</span>
+      <span class="lane-count" id="countApproved">0</span>
+    </div>
+    <div class="lane-body" id="laneApproved">
+      <div class="status"><div class="spinner"></div><p>Loading…</p></div>
+    </div>
+  </div>
+  <div class="lane">
+    <div class="lane-header">
+      <span class="lane-dot orange"></span>
+      <span class="lane-name">กำลังติดตั้ง</span>
+      <span class="lane-count" id="countInstalling">0</span>
+    </div>
+    <div class="lane-body" id="laneInstalling"></div>
+  </div>
+  <div class="lane">
+    <div class="lane-header">
+      <span class="lane-dot teal"></span>
+      <span class="lane-name">ติดตั้งสำเร็จ</span>
+      <span class="lane-count" id="countInstalled">0</span>
+    </div>
+    <div class="lane-body" id="laneInstalled"></div>
+  </div>
+</main>
+
+<!-- Edit drawer (slide in from right) -->
+<div class="modal-backdrop" id="editModal">
+  <div class="modal-drawer">
+    <div class="modal-header">
+      <h3 id="editTitle">Edit Entry</h3>
+      <button class="close-btn" onclick="closeEdit()" aria-label="Close">×</button>
+    </div>
+    <form id="editForm"></form>
+    <div class="modal-actions">
+      <button class="quick-btn secondary delete-btn" id="editDeleteBtn" onclick="deleteEdit()">Delete</button>
+      <button class="quick-btn secondary" onclick="closeEdit()">Cancel</button>
+      <button class="quick-btn primary" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = location.origin;
+
+// State
+let schema = null;
+let pages = [];  // pre-filtered to TARGET_STATUSES
+let assigneeFilter = '';
+let systemFilter = '';
+let searchQuery = '';
+
+// Resolved property names (filled in load())
+let statusName = null;
+let assigneeName = null;
+let systemName = null;
+let hospitalName = null;
+let positionName = null;
+let phoneName = null;
+let hubName = null;
+let pcuField = null;
+
+const APPROVED   = /อนุมัติแล้ว|approved/i;
+const INSTALLING = /กำลังติดตั้ง|installing|in\s*progress/i;
+const INSTALLED  = /ติดตั้งสำเร็จ|installed|install\s*success/i;
+
+document.getElementById('refreshBtn').onclick = () => load();
+document.getElementById('searchInput').oninput = (e) => { searchQuery = e.target.value.trim(); render(); };
+document.getElementById('assigneeFilter').onchange = (e) => {
+  assigneeFilter = e.target.value;
+  e.target.classList.toggle('active', !!assigneeFilter);
+  render();
+};
+document.getElementById('systemFilter').onchange = (e) => {
+  systemFilter = e.target.value;
+  e.target.classList.toggle('active', !!systemFilter);
+  render();
+};
+
+window.addEventListener('DOMContentLoaded', load);
+
+async function load(){
+  try {
+    const [s, q] = await Promise.all([
+      fetch(`${API}/api/database`).then(r => r.json()),
+      fetch(`${API}/api/query`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:'{"page_size":100}'
+      }).then(r => r.json())
+    ]);
+    schema = s;
+    document.getElementById('dbName').textContent =
+      s.title?.map(t => t.plain_text).join('') || 'Database';
+
+    resolvePropertyNames();
+
+    // Filter to only records in the install pipeline
+    pages = (q.results || []).filter(p => {
+      if (p.in_trash || p.archived) return false;
+      const v = p.properties[statusName]?.status?.name;
+      return v && (APPROVED.test(v) || INSTALLING.test(v) || INSTALLED.test(v));
+    });
+
+    populateFilters();
+    render();
+  } catch (err) {
+    document.getElementById('laneApproved').innerHTML =
+      `<div class="error"><h3>⚠️ โหลดข้อมูลไม่ได้</h3><p>${escapeHtml(err.message || String(err))}</p></div>`;
+    document.getElementById('laneInstalling').innerHTML = '';
+    document.getElementById('laneInstalled').innerHTML = '';
+  }
+}
+
+function resolvePropertyNames(){
+  const props = schema.properties || {};
+  const findByType = (t) =>
+    Object.keys(props).find(k => props[k].type === t);
+  const findSelectByName = (re) =>
+    Object.keys(props).find(k => props[k].type === 'select' && re.test(k));
+  const findByName = (re) => Object.keys(props).find(k => re.test(k));
+
+  statusName    = findByType('status');
+  assigneeName  = findSelectByName(/ผู้ดำเนินการ|operator|assignee|handler/i);
+  systemName    = findSelectByName(/ใช้ระบบ|ระบบที่ใช้|system/i);
+  hospitalName  = findByName(/โรงพยาบาล|hospital/i);
+  positionName  = findByName(/ตำแหน่ง|position/i);
+  phoneName     = findByType('phone_number');
+  hubName       = findSelectByName(/แม่ข่าย|hub|parent/i);
+
+  const pcuCands = Object.keys(props).filter(k => props[k].type === 'number' && /pcu/i.test(k));
+  pcuField = pcuCands.find(k => !/ติดตั้ง|installed/i.test(k)) || pcuCands[0] || null;
+}
+
+function populateFilters(){
+  // Assignee dropdown
+  const aSel = document.getElementById('assigneeFilter');
+  if (assigneeName){
+    const opts = schema.properties[assigneeName].select.options || [];
+    aSel.innerHTML = '<option value="">ผู้ดำเนินการทั้งหมด</option>' +
+      '<option value="__unassigned__">— ยังไม่มอบหมาย</option>' +
+      opts.map(o => `<option value="${escapeHtml(o.name)}">${escapeHtml(o.name)}</option>`).join('');
+  } else {
+    aSel.style.display = 'none';
+  }
+
+  // System dropdown
+  const sSel = document.getElementById('systemFilter');
+  if (systemName){
+    const opts = schema.properties[systemName].select.options || [];
+    sSel.innerHTML = '<option value="">ทุกระบบ</option>' +
+      opts.map(o => `<option value="${escapeHtml(o.name)}">${escapeHtml(o.name)}</option>`).join('');
+  } else {
+    sSel.style.display = 'none';
+  }
+}
+
+function applyFilters(arr){
+  let view = arr;
+  if (assigneeFilter){
+    if (assigneeFilter === '__unassigned__') {
+      view = view.filter(p => !p.properties[assigneeName]?.select?.name);
+    } else {
+      view = view.filter(p => p.properties[assigneeName]?.select?.name === assigneeFilter);
+    }
+  }
+  if (systemFilter){
+    view = view.filter(p => p.properties[systemName]?.select?.name === systemFilter);
+  }
+  if (searchQuery){
+    const q = searchQuery.toLowerCase();
+    view = view.filter(p => JSON.stringify(p.properties).toLowerCase().includes(q));
+  }
+  return view;
+}
+
+function render(){
+  const view = applyFilters(pages);
+  const lanes = { approved: [], installing: [], installed: [] };
+  for (const p of view){
+    const v = p.properties[statusName]?.status?.name;
+    if (APPROVED.test(v))         lanes.approved.push(p);
+    else if (INSTALLING.test(v))  lanes.installing.push(p);
+    else if (INSTALLED.test(v))   lanes.installed.push(p);
+  }
+  // Order each lane by created_time desc so newest sits on top
+  for (const k of Object.keys(lanes)){
+    lanes[k].sort((a,b) => new Date(b.created_time) - new Date(a.created_time));
+  }
+
+  renderLane('laneApproved',   lanes.approved,   'approved');
+  renderLane('laneInstalling', lanes.installing, 'installing');
+  renderLane('laneInstalled',  lanes.installed,  'installed');
+
+  document.getElementById('countApproved').textContent   = lanes.approved.length;
+  document.getElementById('countInstalling').textContent = lanes.installing.length;
+  document.getElementById('countInstalled').textContent  = lanes.installed.length;
+
+  // PCU sum across visible cards
+  const pcuSum = view.reduce((s, p) => s + (p.properties[pcuField]?.number || 0), 0);
+  const totalCount = view.length;
+  document.getElementById('summaryChip').innerHTML =
+    `แสดง <strong>${totalCount}</strong> งาน · รวม <strong>${pcuSum}</strong> PCU`;
+}
+
+function renderLane(elId, list, kind){
+  const el = document.getElementById(elId);
+  if (!list.length){
+    el.innerHTML = `<div class="lane-empty">— ไม่มีรายการ</div>`;
+    return;
+  }
+  el.innerHTML = list.map(p => renderCard(p, kind)).join('');
+}
+
+function renderCard(page, kind){
+  const p = page.properties;
+  const hospital = hospitalName ? richText(p[hospitalName]) : '';
+  const person   = getTitle(page);
+  const phone    = phoneName ? (p[phoneName]?.phone_number || '') : '';
+  const position = positionName ? richText(p[positionName]) : '';
+  const system   = systemName ? (p[systemName]?.select?.name || '') : '';
+  const hub      = hubName ? (p[hubName]?.select?.name || '') : '';
+  const assignee = assigneeName ? (p[assigneeName]?.select?.name || '') : '';
+  const pcu      = pcuField ? (p[pcuField]?.number || 0) : 0;
+
+  const title = hospital || person || '(ไม่ระบุ)';
+  const personLine = [person && hospital ? person : '', position]
+    .filter(Boolean).join(' · ');
+
+  const tags = [];
+  if (system) tags.push(`<span class="plan-tag tag-system">${escapeHtml(system)}</span>`);
+  if (hub)    tags.push(`<span class="plan-tag tag-hub">${escapeHtml(hub)}</span>`);
+  if (pcu)    tags.push(`<span class="plan-tag tag-pcu">PCU ${pcu}</span>`);
+
+  // Assignee dropdown lets user reassign in-place
+  const assigneeOpts = assigneeName
+    ? (schema.properties[assigneeName].select.options || [])
+        .map(o => `<option value="${escapeHtml(o.name)}"${o.name === assignee ? ' selected' : ''}>${escapeHtml(o.name)}</option>`).join('')
+    : '';
+  const assigneeSelect = assigneeName
+    ? `<select class="assignee-select${assignee ? '' : ' unassigned'}"
+              data-id="${page.id}" onchange="reassign(this)">
+         <option value="">— ยังไม่มอบหมาย</option>
+         ${assigneeOpts}
+       </select>`
+    : `<span class="summary-chip">${assignee ? '👤 ' + escapeHtml(assignee) : '—'}</span>`;
+
+  let actionBtn = '';
+  if (kind === 'approved'){
+    actionBtn = `<button class="quick-btn primary" onclick="advance('${page.id}','installing')">→ Start</button>`;
+  } else if (kind === 'installing'){
+    actionBtn = `<button class="quick-btn primary" onclick="advance('${page.id}','installed')">✓ Done</button>`;
+  } else {
+    actionBtn = `<button class="quick-btn secondary" onclick="advance('${page.id}','installing')">↺ Reopen</button>`;
+  }
+
+  return `
+    <div class="plan-card" data-id="${page.id}">
+      <div class="plan-card-title">${escapeHtml(title)}</div>
+      ${personLine || phone ? `
+        <div class="plan-card-person">
+          ${personLine ? escapeHtml(personLine) : ''}
+          ${phone ? `<div class="plan-card-phone">📞 ${escapeHtml(phone)}</div>` : ''}
+        </div>` : ''}
+      ${tags.length ? `<div class="plan-card-tags">${tags.join('')}</div>` : ''}
+      <div class="plan-card-row">
+        ${assigneeSelect}
+        ${actionBtn}
+      </div>
+    </div>`;
+}
+
+async function advance(pageId, toKind){
+  if (!statusName) return;
+  const map = {
+    approved:   'อนุมัติแล้ว',
+    installing: 'กำลังติดตั้ง',
+    installed:  'ติดตั้งสำเร็จ'
+  };
+  // Use the exact option name from the schema (case-insensitive name match)
+  const optName = findStatusOptionByPattern({
+    installing: INSTALLING,
+    installed:  INSTALLED
+  }[toKind]) || map[toKind];
+
+  try {
+    const res = await fetch(`${API}/api/pages/${pageId}`, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ properties: { [statusName]: { status: { name: optName } } } })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
+    showToast(`เลื่อนสถานะเป็น ${optName}`, 'success');
+    await load();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function reassign(selectEl){
+  if (!assigneeName) return;
+  const id = selectEl.dataset.id;
+  const newVal = selectEl.value;
+  try {
+    const res = await fetch(`${API}/api/pages/${id}`, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        properties: { [assigneeName]: newVal ? { select: { name: newVal } } : { select: null } }
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
+    showToast(newVal ? `มอบหมายให้ ${newVal}` : 'ยกเลิกการมอบหมาย', 'success');
+    selectEl.classList.toggle('unassigned', !newVal);
+    // Optimistic local update so we don't refetch all
+    const page = pages.find(p => p.id === id);
+    if (page) page.properties[assigneeName] = newVal ? { select: { name: newVal } } : { select: null };
+    render();
+  } catch (err) {
+    showToast(err.message, 'error');
+    await load();  // re-sync on failure
+  }
+}
+
+// ————— Edit drawer —————
+let editingPage = null;
+
+// Click on a card opens the Edit drawer — but only when the click was NOT
+// on an interactive child (assignee dropdown or quick-action button).
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.assignee-select') || e.target.closest('.quick-btn')) return;
+  const card = e.target.closest('.plan-card');
+  if (!card) return;
+  openEdit(card.dataset.id);
+});
+document.getElementById('editModal').addEventListener('click', (e) => {
+  if (e.target.id === 'editModal') closeEdit();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('editModal').classList.contains('show')) closeEdit();
+});
+
+function openEdit(pageId){
+  const page = pages.find(p => p.id === pageId);
+  if (!page) return;
+  editingPage = page;
+
+  const form = document.getElementById('editForm');
+  form.innerHTML = '';
+  const editable = new Set(['title','rich_text','number','select','multi_select','status','date','checkbox','url','email','phone_number']);
+
+  Object.entries(schema.properties).forEach(([name, sch]) => {
+    if (!editable.has(sch.type)) return;
+    const current = page.properties[name];
+    const group = document.createElement('div');
+    group.className = 'form-group';
+    const label = document.createElement('label');
+    label.textContent = `${name} (${sch.type})`;
+    group.appendChild(label);
+
+    let input;
+    switch (sch.type){
+      case 'title':
+      case 'rich_text': {
+        input = document.createElement('textarea');
+        input.rows = sch.type === 'title' ? 1 : 2;
+        if (current){
+          const arr = sch.type === 'title' ? current.title : current.rich_text;
+          input.value = (arr || []).map(t => t.plain_text).join('');
+        }
+        break;
+      }
+      case 'number': {
+        input = document.createElement('input');
+        input.type = 'number'; input.step = 'any';
+        if (current && current.number != null) input.value = current.number;
+        break;
+      }
+      case 'select':
+      case 'status': {
+        input = document.createElement('select');
+        input.innerHTML = '<option value="">—</option>';
+        (sch[sch.type]?.options || []).forEach(opt => {
+          const o = document.createElement('option');
+          o.value = opt.name; o.textContent = opt.name;
+          input.appendChild(o);
+        });
+        if (current && current[sch.type]) input.value = current[sch.type].name;
+        break;
+      }
+      case 'multi_select': {
+        input = document.createElement('input');
+        input.type = 'text';
+        const opts = (sch.multi_select?.options || []).map(o => o.name).join(', ');
+        input.placeholder = opts ? `e.g. ${opts}` : 'comma,separated,values';
+        if (current) input.value = (current.multi_select || []).map(t => t.name).join(', ');
+        break;
+      }
+      case 'date': {
+        input = document.createElement('input');
+        input.type = 'date';
+        if (current?.date) input.value = current.date.start.split('T')[0];
+        break;
+      }
+      case 'checkbox': {
+        input = document.createElement('input');
+        input.type = 'checkbox'; input.style.width = 'auto';
+        if (current) input.checked = current.checkbox;
+        break;
+      }
+      case 'url':
+      case 'email':
+      case 'phone_number': {
+        input = document.createElement('input');
+        input.type = sch.type === 'email' ? 'email' : 'text';
+        if (current) input.value = current[sch.type] || '';
+        break;
+      }
+    }
+    input.dataset.propName = name;
+    input.dataset.propType = sch.type;
+    group.appendChild(input);
+    form.appendChild(group);
+  });
+
+  // Title bar text — show hospital + person if available so user knows what they're editing
+  const title = (hospitalName ? richText(page.properties[hospitalName]) : '') ||
+                getTitle(page) || 'Edit Entry';
+  document.getElementById('editTitle').textContent = title;
+  document.getElementById('editModal').classList.add('show');
+}
+
+function closeEdit(){
+  document.getElementById('editModal').classList.remove('show');
+  editingPage = null;
+}
+
+async function saveEdit(){
+  if (!editingPage) return;
+  const form = document.getElementById('editForm');
+  const properties = {};
+  form.querySelectorAll('[data-prop-name]').forEach(el => {
+    const name = el.dataset.propName;
+    const type = el.dataset.propType;
+    const v = type === 'checkbox' ? el.checked : el.value;
+    switch (type){
+      case 'title':
+        if (v) properties[name] = { title: [{ text: { content: v } }] };
+        break;
+      case 'rich_text':
+        properties[name] = v ? { rich_text: [{ text: { content: v } }] } : { rich_text: [] };
+        break;
+      case 'number':
+        properties[name] = { number: v === '' ? null : Number(v) };
+        break;
+      case 'select':
+        properties[name] = v ? { select: { name: v } } : { select: null };
+        break;
+      case 'status':
+        if (v) properties[name] = { status: { name: v } };
+        break;
+      case 'multi_select':
+        properties[name] = {
+          multi_select: v.split(',').map(s => s.trim()).filter(Boolean).map(name => ({ name }))
+        };
+        break;
+      case 'date':
+        properties[name] = v ? { date: { start: v } } : { date: null };
+        break;
+      case 'checkbox':
+        properties[name] = { checkbox: v };
+        break;
+      case 'url':          properties[name] = { url: v || null }; break;
+      case 'email':        properties[name] = { email: v || null }; break;
+      case 'phone_number': properties[name] = { phone_number: v || null }; break;
+    }
+  });
+
+  try {
+    const res = await fetch(`${API}/api/pages/${editingPage.id}`, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ properties })
+    });
+    if (!res.ok){
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `HTTP ${res.status}`);
+    }
+    closeEdit();
+    showToast('บันทึกสำเร็จ', 'success');
+    await load();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function deleteEdit(){
+  if (!editingPage) return;
+  if (!confirm('Archive entry นี้? (กู้คืนได้ใน Notion)')) return;
+  try {
+    const res = await fetch(`${API}/api/pages/${editingPage.id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    closeEdit();
+    showToast('ย้ายเข้า archive แล้ว', 'success');
+    await load();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+// ————— Helpers —————
+function findStatusOptionByPattern(re){
+  if (!statusName || !re) return null;
+  const opts = schema.properties[statusName].status.options || [];
+  const hit = opts.find(o => re.test(o.name));
+  return hit ? hit.name : null;
+}
+function richText(prop){
+  if (!prop) return '';
+  if (prop.type === 'rich_text') return prop.rich_text.map(t => t.plain_text).join('').trim();
+  if (prop.type === 'title')     return prop.title.map(t => t.plain_text).join('').trim();
+  return '';
+}
+function getTitle(page){
+  const t = Object.values(page.properties).find(p => p.type === 'title');
+  return t ? t.title.map(x => x.plain_text).join('').trim() : '';
+}
+function showToast(msg, type='success'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+function escapeHtml(s){
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+// PWA — register the existing service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .catch(err => console.warn('SW registration failed:', err));
+  });
+}
+</script>
+
+</body>
+</html>

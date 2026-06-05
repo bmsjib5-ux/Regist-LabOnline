@@ -388,6 +388,89 @@
     text-align:right;font-weight:500;
   }
 
+  /* —— Hub / Node Breakdown table —— */
+  .hub-table{width:100%;border-collapse:collapse;margin-top:4px}
+  .hub-table th,.hub-table td{
+    padding:12px 10px;text-align:right;border-bottom:1px solid var(--line);
+  }
+  .hub-table th:first-child,.hub-table td:first-child{
+    text-align:left;font-weight:500;
+  }
+  .hub-table th{
+    font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;
+    text-transform:uppercase;color:var(--muted);letter-spacing:.08em;
+  }
+  .hub-table td{
+    font-family:'Fraunces',serif;font-size:20px;font-weight:500;color:var(--ink);
+    letter-spacing:-.01em;
+  }
+  .hub-table td:first-child{
+    font-family:'IBM Plex Sans Thai',system-ui,sans-serif;font-size:14px;color:var(--ink-soft);
+  }
+  .hub-table td.hub-dot-cell{
+    display:flex;align-items:center;gap:8px;font-size:14px;
+  }
+  .hub-table .hub-dot{
+    width:8px;height:8px;border-radius:50%;display:inline-block;
+  }
+  .hub-table .hub-dot.purple{background:#5c3fa0}
+  .hub-table .hub-dot.green{background:#4da54f}
+  .hub-table tbody tr:last-child td{border-bottom:none}
+  .hub-table .hub-total-row td{
+    border-top:2px solid var(--line);color:var(--accent);font-weight:600;
+    padding-top:14px;
+  }
+  .hub-table .hub-total-row td:first-child{color:var(--ink)}
+
+  /* —— Calendar (month grid) —— */
+  .cal-head{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:14px;
+  }
+  .cal-title{
+    font-family:'Fraunces',serif;font-size:18px;font-weight:500;
+    letter-spacing:-.01em;
+  }
+  .cal-nav{display:flex;align-items:center;gap:4px}
+  .cal-nav-btn{
+    border:1px solid var(--line);background:#fff;color:var(--ink-soft);
+    width:30px;height:30px;border-radius:8px;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:14px;transition:all .15s;
+  }
+  .cal-nav-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .cal-nav-today{
+    border:1px solid var(--line);background:#fff;color:var(--ink-soft);
+    height:30px;padding:0 12px;border-radius:8px;cursor:pointer;
+    font-family:inherit;font-size:11px;
+    text-transform:uppercase;letter-spacing:.08em;
+    transition:all .15s;
+  }
+  .cal-nav-today:hover{border-color:var(--accent);color:var(--accent)}
+  .cal-grid{
+    display:grid;grid-template-columns:repeat(7, 1fr);gap:4px;
+  }
+  .cal-dow{
+    text-align:center;font-family:'JetBrains Mono',monospace;font-size:10px;
+    text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+    padding:6px 0;
+  }
+  .cal-cell{
+    aspect-ratio:1.3;padding:6px 8px;border:1px solid var(--line);
+    border-radius:8px;display:flex;flex-direction:column;gap:2px;
+    transition:all .15s;
+  }
+  .cal-cell-empty{border-color:transparent;background:transparent}
+  .cal-cell-day{font-size:11px;font-weight:500;color:var(--ink-soft)}
+  .cal-cell-count{
+    margin-top:auto;font-family:'Fraunces',serif;font-size:18px;
+    font-weight:500;text-align:right;color:var(--accent);line-height:1;
+  }
+  .cal-cell-active{background:var(--accent-soft);border-color:#f0c8b6}
+  .cal-cell-active .cal-cell-day{color:var(--accent);font-weight:600}
+  .cal-cell-today{border-color:var(--ink);border-width:2px;padding:5px 7px}
+  .cal-cell-today .cal-cell-day{color:var(--ink);font-weight:700}
+
   /* —— Loading / empty / error —— */
   .loader{
     grid-column:1/-1;text-align:center;padding:80px 20px;color:var(--muted);
@@ -444,6 +527,7 @@
       <nav class="nav">
         <a href="/">Gallery</a>
         <a href="/dashboard.html" class="active">Insight</a>
+        <a href="/plan.html">Plan</a>
       </nav>
       <button class="btn btn-ghost" id="refreshBtn" title="Refresh">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
@@ -488,6 +572,7 @@ let gridSort = { col: null, dir: 'desc' };  // col = property name, dir = 'asc' 
 let gridSearch = '';
 let statusFilter = '';  // '' = ทุกสถานะ, else = status option name
 let pageView = [];       // filtered slice of `pages` consumed by render() & gridCard()
+let calendarMonth = (function(){ const d = new Date(); d.setDate(1); return d; })();  // 1st of viewed month
 
 // ————— Palette for chart colors —————
 const COLOR_BY_NOTION = {
@@ -816,6 +901,9 @@ function render(){
 
     ${rankCard('Top Recommenders', `${recommenderName || 'ผู้แนะนำ'}ยอดนิยม`, recommenderCounts, 'span-12')}
 
+    ${hubBreakdownCard('Hub / Node', 'แม่ข่าย-ลูกข่าย × สถานะติดตั้ง', view, hubEntry?.[0], statusName)}
+    ${calendarCard('Calendar', 'การดำเนินงานราย day', view, createdName)}
+
     ${timelineCard('Registrations', '30 วันย้อนหลัง', timeline)}
 
     ${gridCard('Data Grid', 'ตารางข้อมูลทั้งหมด · คลิกหัวคอลัมน์เพื่อเรียงลำดับ')}
@@ -1013,6 +1101,152 @@ function timelineCard(title, sub, series){
         </svg>
       </div>
     </div>`;
+}
+
+// ————— Hub Breakdown card —————
+function hubBreakdownCard(title, sub, pages, hubName, statusName){
+  if (!hubName || !statusName){
+    return `<div class="card span-4">${cardHead(title, sub)}<div class="empty-small">— ไม่พบ field</div></div>`;
+  }
+  const reInstalling = /กำลังติดตั้ง|installing|in\s*progress/i;
+  const reInstalled  = /ติดตั้งสำเร็จ|installed|install\s*success/i;
+  const counts = {
+    hub:  { total: 0, installing: 0, installed: 0 },
+    node: { total: 0, installing: 0, installed: 0 }
+  };
+  pages.forEach(p => {
+    const hub = p.properties[hubName]?.select?.name;
+    const st  = p.properties[statusName]?.status?.name;
+    if (!hub) return;
+    let key = null;
+    if (/แม่ข่าย|parent|hub/i.test(hub)) key = 'hub';
+    else if (/ลูกข่าย|child|node/i.test(hub)) key = 'node';
+    if (!key) return;
+    counts[key].total++;
+    if (st){
+      if (reInstalling.test(st)) counts[key].installing++;
+      else if (reInstalled.test(st)) counts[key].installed++;
+    }
+  });
+  const total = {
+    total: counts.hub.total + counts.node.total,
+    installing: counts.hub.installing + counts.node.installing,
+    installed: counts.hub.installed + counts.node.installed
+  };
+  return `<div class="card span-4">
+    ${cardHead(title, sub)}
+    <table class="hub-table">
+      <thead>
+        <tr><th></th><th>ทั้งหมด</th><th>กำลังติดตั้ง</th><th>ติดตั้งสำเร็จ</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="hub-dot-cell"><span class="hub-dot purple"></span>แม่ข่าย</td>
+          <td>${counts.hub.total}</td>
+          <td>${counts.hub.installing}</td>
+          <td>${counts.hub.installed}</td>
+        </tr>
+        <tr>
+          <td class="hub-dot-cell"><span class="hub-dot green"></span>ลูกข่าย</td>
+          <td>${counts.node.total}</td>
+          <td>${counts.node.installing}</td>
+          <td>${counts.node.installed}</td>
+        </tr>
+        <tr class="hub-total-row">
+          <td>รวม</td>
+          <td>${total.total}</td>
+          <td>${total.installing}</td>
+          <td>${total.installed}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>`;
+}
+
+// ————— Calendar card (month grid of operations) —————
+const TH_MONTHS = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const TH_DOW = ['จ','อ','พ','พฤ','ศ','ส','อา'];  // Monday-first
+
+function calendarCard(title, sub, pages, createdProp){
+  const viewYear  = calendarMonth.getFullYear();
+  const viewMonth = calendarMonth.getMonth();
+  const firstOfMonth = new Date(viewYear, viewMonth, 1);
+  const lastOfMonth  = new Date(viewYear, viewMonth + 1, 0);
+  const daysInMonth  = lastOfMonth.getDate();
+
+  // Monday=0 ... Sunday=6
+  let leadingBlanks = firstOfMonth.getDay() - 1;
+  if (leadingBlanks < 0) leadingBlanks = 6;
+
+  // Count operations (records created) per day in this month
+  const perDay = {};
+  pages.forEach(p => {
+    const prop = p.properties[createdProp];
+    let iso = null;
+    if (prop?.type === 'created_time') iso = prop.created_time;
+    else if (prop?.type === 'date' && prop.date) iso = prop.date.start;
+    if (!iso) iso = p.created_time;
+    if (!iso) return;
+    const d = new Date(iso);
+    if (d.getFullYear() === viewYear && d.getMonth() === viewMonth){
+      const day = d.getDate();
+      perDay[day] = (perDay[day] || 0) + 1;
+    }
+  });
+
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear() === viewYear && today.getMonth() === viewMonth;
+  const todayDay = today.getDate();
+
+  // Build cells: leading blanks, then 1..daysInMonth, then trailing blanks
+  const cells = [];
+  for (let i = 0; i < leadingBlanks; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const monthLabel = `${TH_MONTHS[viewMonth]} ${viewYear}`;
+  const totalOps = Object.values(perDay).reduce((a,b) => a+b, 0);
+
+  const dowRow = TH_DOW.map(d => `<div class="cal-dow">${d}</div>`).join('');
+  const cellsHtml = cells.map(d => {
+    if (!d) return `<div class="cal-cell cal-cell-empty"></div>`;
+    const count = perDay[d] || 0;
+    const isToday = isCurrentMonth && d === todayDay;
+    const classes = ['cal-cell'];
+    if (isToday) classes.push('cal-cell-today');
+    if (count > 0) classes.push('cal-cell-active');
+    return `<div class="${classes.join(' ')}" title="${monthLabel} วันที่ ${d}${count ? ' · '+count+' รายการ' : ''}">
+      <div class="cal-cell-day">${d}</div>
+      ${count ? `<div class="cal-cell-count">${count}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  return `<div class="card span-8">
+    ${cardHead(title, sub + ' · ' + totalOps + ' รายการในเดือนนี้')}
+    <div class="cal-head">
+      <div class="cal-title">${monthLabel}</div>
+      <div class="cal-nav">
+        <button class="cal-nav-btn" title="เดือนก่อนหน้า" onclick="changeCalMonth(-1)">◀</button>
+        <button class="cal-nav-today" title="กลับไปเดือนปัจจุบัน" onclick="changeCalMonth(0)">วันนี้</button>
+        <button class="cal-nav-btn" title="เดือนถัดไป" onclick="changeCalMonth(1)">▶</button>
+      </div>
+    </div>
+    <div class="cal-grid">
+      ${dowRow}
+      ${cellsHtml}
+    </div>
+  </div>`;
+}
+
+function changeCalMonth(delta){
+  if (delta === 0){
+    const d = new Date(); d.setDate(1);
+    calendarMonth = d;
+  } else {
+    calendarMonth.setMonth(calendarMonth.getMonth() + delta);
+  }
+  render();
 }
 
 function completenessCard(title, sub, stats){
